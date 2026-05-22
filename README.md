@@ -29,7 +29,7 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 
 ### Application license
 
-This repository is by default under the MIT License in alignment with Swiss federal open source policy (Art. 9 LMET, Em002 series).
+This repository is by default under the [MIT License](./LICENSE) in alignment with Swiss federal open source policy ([Art. 9 LMET](https://www.fedlex.admin.ch/eli/cc/2023/682/fr#art_9), [Em002 series](https://www.bk.admin.ch/bk/fr/home/digitale-transformation-ikt-lenkung/bundesarchitektur/open_source_software/hilfsmittel_oss.html)).
 
 ### Privacy
 
