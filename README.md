@@ -29,7 +29,7 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 
 ### Application license
 
-[TODO: specify application license]
+This repository is by default under the MIT License in alignment with Swiss federal open source policy (Art. 9 LMET, Em002 series).
 
 ### Privacy
 
