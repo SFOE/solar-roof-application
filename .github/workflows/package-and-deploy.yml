@@ -1,4 +1,4 @@
-name: Build and Deploy Frontend
+name: Build, Archive and Deploy Frontend
 
 on:
   workflow_dispatch:
@@ -21,10 +21,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v6
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
           cache: "npm"
@@ -41,15 +41,15 @@ jobs:
           zip -r ../solar-roof-frontend.zip .
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: solar-roof-frontend
           path: solar-roof-frontend.zip
           retention-days: 5
 
-  deploy:
+  archive:
     needs: build
-    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v9
+    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v8
     with:
       artifact-name: solar-roof-frontend
       artifact-type: .zip
@@ -58,3 +58,29 @@ jobs:
       scan-type: archive
     secrets:
       aws-role: ${{ secrets.SFOE_SOLAR_ROOF_FRONTEND_PIPELINE_ROLE }}
+
+  deploy:
+    needs: [build, archive]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: solar-roof-frontend
+
+      - name: Unzip artifact
+        run: |
+          mkdir -p dist
+          unzip solar-roof-frontend.zip -d dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.SFOE_SOLAR_ROOF_FRONTEND_PIPELINE_ROLE }}
+          aws-region: eu-central-1
+
+      - name: Deploy to S3
+        run: aws s3 sync dist/ s3://solar-roof-dev-frontend/ --delete
+
+      - name: Invalidate CloudFront cache
+        run: aws cloudfront create-invalidation --distribution-id E9WP13KQJMT7I --paths "/*"
