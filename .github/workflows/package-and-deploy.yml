@@ -49,7 +49,7 @@ jobs:
 
   deploy:
     needs: build
-    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v8
+    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v9
     with:
       artifact-name: solar-roof-frontend
       artifact-type: .zip
