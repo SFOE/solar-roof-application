@@ -57,4 +57,4 @@ jobs:
       s3-bucket: solar-roof-dev-frontend-artifact-store
       scan-type: archive
     secrets:
-      aws-role: ${{ secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE }}
+      aws-role: ${{ secrets.SFOE_SOLAR_ROOF_FRONTEND_PIPELINE_ROLE }}
