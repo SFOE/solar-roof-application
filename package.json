@@ -34,7 +34,7 @@
     "@types/node": "^26.0.0",
     "@types/proj4": "^2.19.0",
     "@vitejs/plugin-vue": "^6.0.7",
-    "@vue/eslint-config-typescript": "^14.6.0",
+    "@vue/eslint-config-typescript": "^14.9.0",
     "@vue/tsconfig": "^0.9.1",
     "cypress": "^15.17.0",
     "eslint": "^10.5.0",
