@@ -1,4 +1,9 @@
-# Sonnendach — Solar Potential Viewer
+![Repo Owner](https://img.shields.io/badge/Repo_Owner-Geoinformation-blue)
+![Repo Custodian](https://img.shields.io/badge/Repo_Custodian-Geoinformation-blue)
+![Section](https://img.shields.io/badge/Section-GO-blue)
+![Status](https://img.shields.io/badge/Status-in--development-yellow)
+
+# Solar Roof Application
 
 ## Description & Purpose
 
@@ -20,49 +25,39 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 
 - **Building geometries**: swissBUILDINGS3D 2.0 (swisstopo)
 - **Solar irradiation**: Satellite-based data 2011–2020 (MeteoSwiss)
-- **Calculation model**: Meteotest AG model on behalf of SFOE
+- **Calculation model**: Meteotest AG on behalf of SFOE
 - **Building register**: GWR (Federal Statistical Office)
-
----
 
 ## License & Privacy
 
-### Application license
-
-This repository is by default under the [MIT License](./LICENSE) in alignment with Swiss federal open source policy ([Art. 9 LMET](https://www.fedlex.admin.ch/eli/cc/2023/682/fr#art_9), [Em002 series](https://www.bk.admin.ch/bk/fr/home/digitale-transformation-ikt-lenkung/bundesarchitektur/open_source_software/hilfsmittel_oss.html)).
-
-### Privacy
+This repository is under the [MIT License](LICENSE).
 
 The application does not collect, store or process any personal data. All API calls are made directly from the user's browser to public Swiss government APIs (geo.admin.ch). No analytics or tracking is implemented.
 
----
-
-## Usage
+## Installation & Setup
 
 ### Prerequisites
 
 - Node.js ≥ 20.19.0 or ≥ 22.12.0
 - npm
 
-### Development
+### Setup
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server (hot reload)
-npm run dev
-
-# Open http://localhost:5173
 ```
 
-### Production build
+## Usage
 
 ```bash
+# Start development server (hot reload)
+npm run dev
+# Open http://localhost:5173
+
 # Build for production
 npm run build-only
 
-# Preview production build locally
+# Preview production build
 npm run preview
 
 # Type check
@@ -84,50 +79,35 @@ npm run lint
 
 ### Known limitations
 
-- **Partial building selection**: In areas with row houses, a click may only select part of the visible building. This is due to how `building_id` is assigned in the source data (swissBUILDINGS3D), which does not always match the visual building footprint.
-- **Missing addresses**: Some buildings (non-residential, annexes, agricultural) may not display an address, as the GWR register does not cover all structures or the EGID mapping may be incomplete.
+- **Partial building selection**: In areas with row houses, a click may only select part of the visible building due to how `building_id` is assigned in the source data.
+- **Missing addresses**: Some buildings (non-residential, annexes, agricultural) may not display an address, as the GWR register does not cover all structures.
 
----
-
-## Project Structure
+## Folder Structure
 
 ```
-src/
-├── main.ts               # App entry point, plugin registration
-├── App.vue               # Root component
-├── router/               # Vue Router configuration
-├── views/
-│   └── SonnendachView.vue    # Main page (assembles all components)
-├── components/
-│   ├── HeaderComponent.vue   # Swiss Confederation header
-│   ├── FooterComponent.vue   # Swiss Confederation footer
-│   ├── SearchBar.vue         # Address search with autocomplete
-│   ├── ModeToggle.vue        # Roofs / Facades toggle
-│   ├── MapComponent.vue      # Interactive map (OpenLayers + WMTS)
-│   ├── InfoPanel.vue         # Solar data results panel
-│   └── FaqSection.vue        # FAQ accordion
-├── stores/
-│   ├── mapStore.ts           # Shared state (solar data, mode, address)
-│   └── languageStore.ts      # Active language state
-├── composables/
-│   └── useProjections.ts     # Swiss projections (EPSG:2056)
-├── types/
-│   └── solar.ts              # TypeScript interfaces
-├── locales/
-│   ├── de.json               # German translations
-│   ├── fr.json               # French translations
-│   ├── it.json               # Italian translations
-│   └── en.json               # English translations
-└── assets/                   # CSS, logos
+├── src/
+│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, etc.)
+│   ├── composables/      ← Reusable logic (projections)
+│   ├── locales/          ← i18n translations (de, fr, it, en)
+│   ├── stores/           ← Pinia stores (map state, language)
+│   ├── types/            ← TypeScript interfaces
+│   ├── views/            ← Page-level components
+│   ├── assets/           ← CSS, logos
+│   └── main.ts           ← App entry point
+├── .github/              ← GitHub configuration (workflows, Dependabot)
+├── package.json          ← Dependencies and scripts
+├── vite.config.ts        ← Vite configuration
+├── tsconfig.json         ← TypeScript configuration
+└── README.md             ← This file
 ```
 
----
+## Contributing
+
+- Use feature branches for all changes
+- Submit pull requests for review before merging
+- Write meaningful commit messages
+- Code was developed with AI assistance (ai-generated level — Kiro)
 
 ## Contact
 
-**Swiss Federal Office of Energy (SFOE)**
-Geoinformation Service
-
-- Website: [www.bfe.admin.ch](https://www.bfe.admin.ch)
-- Email: geoinformation@bfe.admin.ch
-- Application: [sonnendach.ch](https://www.uvek-gis.admin.ch/BFE/sonnendach/)
+geoinformation@bfe.admin.ch
