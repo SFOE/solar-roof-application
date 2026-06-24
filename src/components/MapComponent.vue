@@ -313,9 +313,9 @@ async function identifyAt(coords: [number, number]) {
 
   try {
     // Step 1: Identify to find the building_id at click point
-    // Facades need tolerance because they are thin surfaces
+    // Both roofs and facades need some tolerance for reliable detection
     const isFacades = layerName === LAYER_FACADES
-    const tolerance = isFacades ? 40 : 0
+    const tolerance = isFacades ? 40 : 10
     const identifyParams: Record<string, any> = {
       geometryType: 'esriGeometryPoint',
       geometry: `${coords[0]},${coords[1]}`,
@@ -326,10 +326,8 @@ async function identifyAt(coords: [number, number]) {
       limit: 1,
     }
     // imageDisplay and mapExtent are required when tolerance > 0
-    if (tolerance > 0) {
-      identifyParams.imageDisplay = '500,500,96'
-      identifyParams.mapExtent = `${coords[0] - 50},${coords[1] - 50},${coords[0] + 50},${coords[1] + 50}`
-    }
+    identifyParams.imageDisplay = '500,500,96'
+    identifyParams.mapExtent = `${coords[0] - 50},${coords[1] - 50},${coords[0] + 50},${coords[1] + 50}`
     const identifyResp = await axios.get(
       'https://api3.geo.admin.ch/rest/services/api/MapServer/identify',
       { params: identifyParams },
