@@ -8,7 +8,25 @@
 -->
 
 <template>
-  <div ref="mapContainer" class="map-wrapper"></div>
+  <div class="map-container">
+    <div ref="mapContainer" class="map-wrapper"></div>
+    <!-- Attribution bar -->
+    <div class="map-attribution">© Données: OFEN, swisstopo</div>
+    <!-- Basemap switcher: shows the alternative option -->
+    <div class="basemap-switcher">
+      <template v-for="bm in basemaps" :key="bm.id">
+        <button
+          v-if="bm.id !== activeBasemap"
+          class="basemap-thumb"
+          @click="switchBasemap(bm.id)"
+          :title="bm.label"
+        >
+          <img :src="bm.thumbnail" :alt="bm.label" />
+          <span class="basemap-label">{{ bm.label }}</span>
+        </button>
+      </template>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -28,6 +46,7 @@ import Feature from 'ol/Feature'
 import GeoJSON from 'ol/format/GeoJSON'
 import { Fill, Stroke, Style } from 'ol/style'
 import { getCenter } from 'ol/extent'
+import { ScaleLine } from 'ol/control'
 import type { MapBrowserEvent } from 'ol'
 
 const mapContainer = ref<HTMLDivElement>()
@@ -64,6 +83,23 @@ function createSwissWmtsSource(layerName: string, format: string): WMTS {
     requestEncoding: 'REST',
     crossOrigin: 'anonymous',
   })
+}
+
+// Basemap configuration
+const basemaps = [
+  { id: 'satellite', label: 'Satellite', layer: 'ch.swisstopo.swissimage', format: 'jpeg', thumbnail: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/2056/17/6/4.jpeg' },
+  { id: 'grey', label: 'Carte N\u0026B', layer: 'ch.swisstopo.pixelkarte-grau', format: 'jpeg', thumbnail: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/2056/17/6/4.jpeg' },
+]
+const activeBasemap = ref('satellite')
+let basemapLayer: TileLayer | null = null
+
+/** Switches the basemap layer */
+function switchBasemap(id: string) {
+  activeBasemap.value = id
+  const bm = basemaps.find(b => b.id === id)
+  if (bm && basemapLayer) {
+    basemapLayer.setSource(createSwissWmtsSource(bm.layer, bm.format))
+  }
 }
 
 // Reference to the solar layer (to swap its source)
@@ -429,12 +465,14 @@ onMounted(() => {
     source: createSwissWmtsSource(LAYER_ROOFS, 'png'),
   })
 
+  basemapLayer = new TileLayer({
+    source: createSwissWmtsSource('ch.swisstopo.swissimage', 'jpeg'),
+  })
+
   const map = new Map({
     target: mapContainer.value,
     layers: [
-      new TileLayer({
-        source: createSwissWmtsSource('ch.swisstopo.swissimage', 'jpeg'),
-      }),
+      basemapLayer,
       solarLayer,
       outlineLayer,
     ],
@@ -443,7 +481,8 @@ onMounted(() => {
       center: swissCenter,
       extent: [2420000, 1030000, 2900000, 1350000],
       resolution: 1500,
-      resolutions,
+      minResolution: 0.1,
+      maxResolution: 4000,
     }),
   })
 
@@ -452,11 +491,18 @@ onMounted(() => {
     map.getTargetElement().style.cursor = evt.dragging ? 'grabbing' : 'pointer'
   })
 
+  // Add scale bar
+  map.addControl(new ScaleLine({ units: 'metric' }))
+
   mapInstance.value = map
 })
 </script>
 
 <style scoped>
+.map-container {
+  position: relative;
+}
+
 .map-wrapper {
   width: 100%;
   height: 300px;
@@ -464,5 +510,64 @@ onMounted(() => {
   border-radius: 4px;
   overflow: hidden;
   margin: 0.5rem 0;
+}
+
+.basemap-switcher {
+  position: absolute;
+  bottom: 30px;
+  right: 12px;
+  display: flex;
+  gap: 6px;
+  z-index: 10;
+}
+
+.basemap-thumb {
+  width: 70px;
+  height: 50px;
+  border: 2px solid #fff;
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  transition: border-color 0.2s;
+}
+
+.basemap-thumb.active {
+  border-color: #d32f2f;
+}
+
+.basemap-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.map-attribution {
+  position: absolute;
+  bottom: 4px;
+  right: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: #333;
+  font-size: 0.65rem;
+  padding: 2px 6px;
+  border-radius: 3px;
+  z-index: 10;
+}
+
+.basemap-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0,0,0,0.6);
+  color: #fff;
+  font-size: 0.65rem;
+  text-align: center;
+  padding: 2px 1px;
+  line-height: 1.1;
+  white-space: pre-line;
 }
 </style>
