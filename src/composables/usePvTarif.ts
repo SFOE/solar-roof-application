@@ -93,13 +93,29 @@ export function usePvTarif() {
         const evuData = evuResp.data
         console.log('[VESE] EVU response:', evuData)
 
-        const evuValid = evuData.valid === true || evuData.valid === 'true'
+        // Clean BOM from EVU response keys too
+        const cleanEvuData: any = {}
+        for (const key of Object.keys(evuData)) {
+          cleanEvuData[key.replace(/\uFEFF/g, '')] = evuData[key]
+        }
+
+        const evuValid = cleanEvuData.valid === true || cleanEvuData.valid === 'true'
         if (evuValid) {
+          const energyRate = cleanEvuData.energy1 ? parseFloat(cleanEvuData.energy1) : null
+          const ecoRate = cleanEvuData.eco1 ? parseFloat(cleanEvuData.eco1) : null
+          const ecoIncluded = cleanEvuData.ecoIncl === 'y'
+
+          // Total tariff = energy + HKN (unless HKN is already included in energy)
+          let totalRate = energyRate
+          if (energyRate !== null && ecoRate !== null && !ecoIncluded) {
+            totalRate = Math.round((energyRate + ecoRate) * 100) / 100
+          }
+
           results.push({
-            name: evuData.nomEw || evu.Name,
+            name: cleanEvuData.nomEw || evu.Name,
             nrElcom: evu.nrElcom,
-            energy1: evuData.energy1 ? parseFloat(evuData.energy1) : null,
-            eco1: evuData.eco1 ? parseFloat(evuData.eco1) : null,
+            energy1: totalRate,
+            eco1: ecoRate,
             communeName: evu.Gemeinde,
             communeId: evu.idofs,
             year: 2000 + parseInt(currentYear),

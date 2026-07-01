@@ -18,6 +18,7 @@ const languageStore = useLanguageStore()
 const store = useMapStore()
 const mapRef = ref<InstanceType<typeof MapComponent>>()
 const infoPanelSection = ref<HTMLDivElement>()
+const mapSection = ref<HTMLDivElement>()
 
 if (typeof route.query.lang === 'string') {
   languageStore.currentLocale = route.query.lang
@@ -47,7 +48,7 @@ watch(
   (loading, wasLoading) => {
     if (wasLoading && !loading) {
       setTimeout(() => {
-        infoPanelSection.value?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+        mapSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
       }, 100)
     }
   },
@@ -60,7 +61,9 @@ watch(
     <h2 class="page-title">{{ $t('main_title') }}</h2>
     <SearchBar @select="onAddressSelect" />
     <ModeToggle />
-    <MapComponent ref="mapRef" />
+    <div ref="mapSection">
+      <MapComponent ref="mapRef" />
+    </div>
     <div ref="infoPanelSection" style="padding-bottom: 1rem;">
       <InfoPanel />
     </div>
