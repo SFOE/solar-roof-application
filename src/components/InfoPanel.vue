@@ -96,6 +96,14 @@
           <span class="info-label">{{ $t('info_financial') }}</span>
           <span class="info-value">{{ fmt(store.roofData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
+        <div class="info-row">
+          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE</a>)</span>
+          <span class="info-value">{{ tarifValue }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">{{ $t('info_provider') }}</span>
+          <span class="info-value">{{ tarifProviderName }}</span>
+        </div>
       </div>
 
       <div class="info-section">
@@ -126,6 +134,10 @@
     <p class="map-link">
       {{ $t('info_individual_link') }}
       <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
+    </p>
+    <p class="map-link">
+      {{ $t('info_solar_calculator_text') }}
+      <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
     </p>
     <p class="faq-link">
       {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>
@@ -177,6 +189,14 @@
           <span class="info-label">{{ $t('info_financial') }}</span>
           <span class="info-value">{{ fmt(store.facadeData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
+        <div class="info-row">
+          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE</a>)</span>
+          <span class="info-value">{{ tarifValue }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">{{ $t('info_provider') }}</span>
+          <span class="info-value">{{ tarifProviderName }}</span>
+        </div>
       </div>
 
       <div class="info-section">
@@ -206,10 +226,10 @@
 
     <p class="map-link">
       {{ $t('info_individual_link') }}
-      <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
+      <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>.
     </p>
     <p class="faq-link">
-      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>
+      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>.
     </p>
   </div>
 </template>
@@ -217,9 +237,33 @@
 <script setup lang="ts">
 import { useMapStore } from '@/stores/mapStore'
 import { useI18n } from 'vue-i18n'
+import { watch, computed } from 'vue'
+import { usePvTarif } from '@/composables/usePvTarif'
 
 const store = useMapStore()
 const { t, locale } = useI18n()
+const { tarifData, loading: tarifLoading, fetchTarif } = usePvTarif()
+
+/** Formatted tariff display: provider name and tariff value */
+const tarifProviderName = computed(() => {
+  if (tarifLoading.value) return '...'
+  if (tarifData.value.length === 0) return '-'
+  return tarifData.value[0].name
+})
+
+const tarifValue = computed(() => {
+  if (tarifLoading.value) return '...'
+  if (tarifData.value.length === 0 || tarifData.value[0].energy1 === null) return '-'
+  return `${tarifData.value[0].energy1} cts/kWh`
+})
+
+// Fetch tariff when commune changes
+watch(() => store.communeId, (newId) => {
+  console.log('[VESE] communeId changed:', newId)
+  if (newId) {
+    fetchTarif(newId)
+  }
+}, { immediate: true })
 
 /** Construit l'URL map.geo.admin.ch centrée sur le bâtiment avec la couche solaire */
 function geoAdminUrl(mode: 'roofs' | 'facades'): string {
@@ -315,9 +359,20 @@ function suitabilityColor(classNum: number): string {
   color: #666;
 }
 
+.info-label .inline-link {
+  color: #1565c0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.info-label .inline-link:hover {
+  text-decoration: underline;
+}
+
 .info-value {
   font-weight: 600;
   color: #333;
+  text-align: right;
 }
 
 .badge {
@@ -388,11 +443,15 @@ function suitabilityColor(classNum: number): string {
 }
 
 .map-link {
-  margin: 0.75rem 0 0;
-  padding-top: 0.5rem;
+  margin: 0.15rem 0 0;
+  padding-top: 0.35rem;
   border-top: 1px solid #eee;
   font-size: 0.85rem;
   color: #666;
+}
+
+.map-link:first-of-type {
+  margin-top: 1.25rem;
 }
 
 .map-link a {
@@ -406,8 +465,8 @@ function suitabilityColor(classNum: number): string {
 }
 
 .faq-link {
-  margin: 0.25rem 0 0;
-  padding-top: 0.5rem;
+  margin: 0.15rem 0 0;
+  padding-top: 0.35rem;
   border-top: 1px solid #eee;
   font-size: 0.85rem;
   color: #666;

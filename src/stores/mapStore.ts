@@ -29,6 +29,9 @@ export const useMapStore = defineStore('map', () => {
   // Selected address (from search or GWR lookup)
   const selectedAddress = ref('')
 
+  // Municipality number (from GWR lookup)
+  const communeId = ref<number | null>(null)
+
   // Whether a click was made but no data was found
   const noData = ref(false)
 
@@ -59,6 +62,7 @@ export const useMapStore = defineStore('map', () => {
     clickCoords,
     lastBuildingId,
     selectedAddress,
+    communeId,
     noData,
     hasData,
     setSolarMode,

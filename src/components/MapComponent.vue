@@ -410,32 +410,33 @@ async function identifyAt(coords: [number, number]) {
   } catch (error) {
     console.error('Identify error:', error)
   } finally {
-    // Look up the building address via GWR using EGID
-    // If no EGID is available, no address is shown
-    if (!addressFromSearch) {
-      const egid = store.roofData?.gwr_egid || store.facadeData?.gwr_egid
-      if (egid) {
-        try {
-          const addrResp = await axios.get(
-            'https://api3.geo.admin.ch/rest/services/api/MapServer/find',
-            {
-              params: {
-                layer: 'ch.bfs.gebaeude_wohnungs_register',
-                searchText: egid, searchField: 'egid',
-                contains: false, returnGeometry: false, limit: 1,
-              },
+    // Look up the building address and commune via GWR using EGID
+    const egid = store.roofData?.gwr_egid || store.facadeData?.gwr_egid
+    if (egid) {
+      try {
+        const addrResp = await axios.get(
+          'https://api3.geo.admin.ch/rest/services/api/MapServer/find',
+          {
+            params: {
+              layer: 'ch.bfs.gebaeude_wohnungs_register',
+              searchText: egid, searchField: 'egid',
+              contains: false, returnGeometry: false, limit: 1,
             },
-          )
-          const addrHit = addrResp.data.results?.find(
-            (r: any) => String(r.attributes.egid) === String(egid),
-          )
-          if (addrHit) {
-            const a = addrHit.attributes
+          },
+        )
+        const addrHit = addrResp.data.results?.find(
+          (r: any) => String(r.attributes.egid) === String(egid),
+        )
+        if (addrHit) {
+          const a = addrHit.attributes
+          if (!addressFromSearch) {
             store.selectedAddress = `${a.strname_deinr}, ${a.dplz4} ${a.dplzname}`
           }
-        } catch { /* non-critical */ }
-      }
-    } else {
+          store.communeId = a.ggdenr ? parseInt(a.ggdenr) : null
+        }
+      } catch { /* non-critical */ }
+    }
+    if (addressFromSearch) {
       store.selectedAddress = addressFromSearch
     }
     store.loading = false
