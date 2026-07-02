@@ -32,8 +32,13 @@ coverage
 /cypress/videos/
 /cypress/screenshots/
 
+validate-ci.mjs
+
 # Vitest
 __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Kiro
+.kiro/

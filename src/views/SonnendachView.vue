@@ -43,12 +43,16 @@ async function onAddressSelect(coords: { east: number; north: number; label: str
 }
 
 // Scroller vers l'infobox quand les données sont chargées (recherche ou clic manuel)
+// Le haut de l'InfoPanel est positionné au milieu vertical de l'écran
 watch(
   () => store.loading,
   (loading, wasLoading) => {
     if (wasLoading && !loading) {
       setTimeout(() => {
-        mapSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        if (!infoPanelSection.value) return
+        const panelTop = infoPanelSection.value.getBoundingClientRect().top + window.scrollY
+        const offset = panelTop - window.innerHeight / 2
+        window.scrollTo({ top: offset, behavior: 'smooth' })
       }, 100)
     }
   },
