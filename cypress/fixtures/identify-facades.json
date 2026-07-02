@@ -1,0 +1,52 @@
+{
+  "results": [
+    {
+      "id": 201,
+      "layerBodId": "ch.bfe.solarenergie-eignung-fassaden",
+      "layerName": "Solarenergie: Eignung Fassaden",
+      "featureId": 80001,
+      "attributes": {
+        "building_id": 1234567,
+        "df_uid": "F1234567_1",
+        "flaeche": 52.0,
+        "gstrahlung": 46800,
+        "mstrahlung": 900,
+        "stromertrag": 5200,
+        "stromertrag_sommerhalbjahr": 3380,
+        "stromertrag_winterhalbjahr": 1820,
+        "waermeertrag": 8500,
+        "bedarf_heizung": 18000,
+        "bedarf_warmwasser": 3500,
+        "flaeche_kollektoren": 38.0,
+        "volumen_speicher": 1400,
+        "klasse": 4,
+        "finanzertrag": 460,
+        "gwr_egid": 12345
+      }
+    },
+    {
+      "id": 202,
+      "layerBodId": "ch.bfe.solarenergie-eignung-fassaden",
+      "layerName": "Solarenergie: Eignung Fassaden",
+      "featureId": 80002,
+      "attributes": {
+        "building_id": 1234567,
+        "df_uid": "F1234567_2",
+        "flaeche": 28.5,
+        "gstrahlung": 19950,
+        "mstrahlung": 700,
+        "stromertrag": 2280,
+        "stromertrag_sommerhalbjahr": 1480,
+        "stromertrag_winterhalbjahr": 800,
+        "waermeertrag": 4100,
+        "bedarf_heizung": 18000,
+        "bedarf_warmwasser": 3500,
+        "flaeche_kollektoren": 20.0,
+        "volumen_speicher": 750,
+        "klasse": 3,
+        "finanzertrag": 200,
+        "gwr_egid": 12345
+      }
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "results": [
+    {
+      "id": 1,
+      "layerBodId": "ch.bfs.gebaeude_wohnungs_register",
+      "layerName": "Gebäude- und Wohnungsregister",
+      "featureId": 12345,
+      "attributes": {
+        "egid": 12345,
+        "strname_deinr": "Bahnhofstrasse 1",
+        "dplz4": 3011,
+        "dplzname": "Bern",
+        "ggdenr": 351
+      }
+    }
+  ]
+}

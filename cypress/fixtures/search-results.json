@@ -1,0 +1,74 @@
+{
+  "results": [
+    {
+      "id": 1,
+      "weight": 1,
+      "attrs": {
+        "label": "Bahnhofstrasse 1 <b>3011 Bern</b>",
+        "detail": "bahnhofstrasse 1 3011 bern",
+        "origin": "address",
+        "x": 2600100,
+        "y": 1199800,
+        "rank": 7,
+        "num": 1,
+        "zoomLevel": 10
+      }
+    },
+    {
+      "id": 2,
+      "weight": 2,
+      "attrs": {
+        "label": "Bahnhofstrasse 3 <b>3011 Bern</b>",
+        "detail": "bahnhofstrasse 3 3011 bern",
+        "origin": "address",
+        "x": 2600120,
+        "y": 1199810,
+        "rank": 7,
+        "num": 3,
+        "zoomLevel": 10
+      }
+    },
+    {
+      "id": 3,
+      "weight": 3,
+      "attrs": {
+        "label": "Bahnhofstrasse 5 <b>3011 Bern</b>",
+        "detail": "bahnhofstrasse 5 3011 bern",
+        "origin": "address",
+        "x": 2600140,
+        "y": 1199820,
+        "rank": 7,
+        "num": 5,
+        "zoomLevel": 10
+      }
+    },
+    {
+      "id": 4,
+      "weight": 4,
+      "attrs": {
+        "label": "Bahnhofstrasse 7 <b>3011 Bern</b>",
+        "detail": "bahnhofstrasse 7 3011 bern",
+        "origin": "address",
+        "x": 2600160,
+        "y": 1199830,
+        "rank": 7,
+        "num": 7,
+        "zoomLevel": 10
+      }
+    },
+    {
+      "id": 5,
+      "weight": 5,
+      "attrs": {
+        "label": "Bahnhofstrasse 9 <b>3011 Bern</b>",
+        "detail": "bahnhofstrasse 9 3011 bern",
+        "origin": "address",
+        "x": 2600180,
+        "y": 1199840,
+        "rank": 7,
+        "num": 9,
+        "zoomLevel": 10
+      }
+    }
+  ]
+}

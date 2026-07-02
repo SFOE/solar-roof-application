@@ -1,0 +1,13 @@
+{
+  "valid": true,
+  "evus": [
+    {
+      "nrElcom": "36",
+      "Name": "BKW Energie AG",
+      "idofs": "351",
+      "PLZ": "3011",
+      "Gemeinde": "Bern",
+      "uid": "CHE-103.258.498"
+    }
+  ]
+}
