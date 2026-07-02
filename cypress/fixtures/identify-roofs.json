@@ -1,0 +1,76 @@
+{
+  "results": [
+    {
+      "id": 101,
+      "layerBodId": "ch.bfe.solarenergie-eignung-daecher",
+      "layerName": "Solarenergie: Eignung Dächer",
+      "featureId": 90001,
+      "attributes": {
+        "building_id": 1234567,
+        "df_uid": "B1234567_1",
+        "flaeche": 45.2,
+        "gstrahlung": 67800,
+        "mstrahlung": 1500,
+        "stromertrag": 7650,
+        "stromertrag_sommerhalbjahr": 5100,
+        "stromertrag_winterhalbjahr": 2550,
+        "waermeertrag": 11200,
+        "bedarf_heizung": 18000,
+        "bedarf_warmwasser": 3500,
+        "flaeche_kollektoren": 32.0,
+        "volumen_speicher": 1200,
+        "klasse": 5,
+        "finanzertrag": 680,
+        "gwr_egid": 12345
+      }
+    },
+    {
+      "id": 102,
+      "layerBodId": "ch.bfe.solarenergie-eignung-daecher",
+      "layerName": "Solarenergie: Eignung Dächer",
+      "featureId": 90002,
+      "attributes": {
+        "building_id": 1234567,
+        "df_uid": "B1234567_2",
+        "flaeche": 30.8,
+        "gstrahlung": 46200,
+        "mstrahlung": 1500,
+        "stromertrag": 4800,
+        "stromertrag_sommerhalbjahr": 3200,
+        "stromertrag_winterhalbjahr": 1600,
+        "waermeertrag": 7400,
+        "bedarf_heizung": 18000,
+        "bedarf_warmwasser": 3500,
+        "flaeche_kollektoren": 22.5,
+        "volumen_speicher": 850,
+        "klasse": 5,
+        "finanzertrag": 425,
+        "gwr_egid": 12345
+      }
+    },
+    {
+      "id": 103,
+      "layerBodId": "ch.bfe.solarenergie-eignung-daecher",
+      "layerName": "Solarenergie: Eignung Dächer",
+      "featureId": 90003,
+      "attributes": {
+        "building_id": 1234567,
+        "df_uid": "B1234567_3",
+        "flaeche": 18.5,
+        "gstrahlung": 27750,
+        "mstrahlung": 1500,
+        "stromertrag": 2400,
+        "stromertrag_sommerhalbjahr": 1600,
+        "stromertrag_winterhalbjahr": 800,
+        "waermeertrag": 3700,
+        "bedarf_heizung": 18000,
+        "bedarf_warmwasser": 3500,
+        "flaeche_kollektoren": 13.0,
+        "volumen_speicher": 500,
+        "klasse": 5,
+        "finanzertrag": 215,
+        "gwr_egid": 12345
+      }
+    }
+  ]
+}

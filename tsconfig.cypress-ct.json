@@ -5,7 +5,10 @@
     "src/**/*",
     "src/**/*.vue",
     "cypress/support/component.*",
-    "cypress/support/commands.ts"
+    "cypress/support/commands.ts",
+    "cypress/support/e2e.ts",
+    "cypress/support/intercepts.ts",
+    "cypress/e2e/**/*"
   ],
   "exclude": [],
   "compilerOptions": {
