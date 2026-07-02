@@ -14,11 +14,16 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 ### Key features
 
 - Interactive map with solar suitability overlay (WMTS from swisstopo)
+- Basemap switcher (satellite / grey map)
 - Address search with autocomplete via the [geo.admin.ch SearchServer API](https://api3.geo.admin.ch/rest/services/api/SearchServer)
-- Automatic aggregation of all roof surfaces per building
+- Automatic aggregation of all roof surfaces per building with outline highlighting
 - PV and solar thermal production estimates based on the [solar suitability dataset](https://opendata.swiss/en/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie)
+- Suitability distribution visualization (% of area per class)
+- PV feed-in tariff display per municipality via the [VESE PvTarif API](https://www.vese.ch/pvtarif/) (Lambda proxy in production)
+- GWR address and commune lookup after building identification
 - Toggle between roofs and facades
-- Multilingual (DE, FR, IT, EN)
+- Multilingual (DE, FR, IT, EN) — switchable via UI or `?lang=xx` query parameter
+- Responsive design with mobile detection
 - FAQ section with links to official resources
 
 ### Data sources
@@ -27,12 +32,17 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 - **Solar irradiation**: Satellite-based data 2011–2020 (MeteoSwiss)
 - **Calculation model**: Meteotest AG on behalf of SFOE
 - **Building register**: GWR (Federal Statistical Office)
+- **PV feed-in tariffs**: [VESE PvTarif API](https://www.vese.ch/pvtarif/) — tariff data per energy provider and municipality
+
+### Backend (VESE Proxy)
+
+A lightweight AWS Lambda function (`solar-roof-dev-vese-proxy`) acts as a proxy to the VESE PvTarif API. This keeps the API license key server-side and avoids exposing it in the browser. In development, a Vite middleware plugin proxies `/api/pvtarif/*` requests locally with the key from `.env.local`.
 
 ## License & Privacy
 
 This repository is under the [MIT License](LICENSE).
 
-The application does not collect, store or process any personal data. All API calls are made directly from the user's browser to public Swiss government APIs (geo.admin.ch). No analytics or tracking is implemented.
+The application does not collect, store or process any personal data. All API calls are made directly from the user's browser to public Swiss government APIs (geo.admin.ch), except for the VESE tariff requests which pass through a Lambda proxy. No analytics or tracking is implemented.
 
 ## Installation & Setup
 
@@ -45,6 +55,20 @@ The application does not collect, store or process any personal data. All API ca
 
 ```bash
 npm install
+```
+
+### Environment variables
+
+Create a `.env.local` file for development:
+
+```
+VITE_VESE_API_KEY=<your-vese-license-key>
+```
+
+In production, the Lambda proxy URL is configured in `.env.production`:
+
+```
+VITE_PVTARIF_API_URL=https://<api-gateway-id>.execute-api.eu-central-1.amazonaws.com
 ```
 
 ## Usage
@@ -70,12 +94,14 @@ npm run lint
 ### Tech stack
 
 - [Vue 3](https://vuejs.org/) + [TypeScript](https://www.typescriptlang.org/)
-- [Vite](https://vitejs.dev/) — build tool
+- [Vite](https://vitejs.dev/) — build tool (with custom VESE proxy plugin for dev)
 - [Pinia](https://pinia.vuejs.org/) — state management
-- [OpenLayers](https://openlayers.org/) — map rendering
+- [OpenLayers](https://openlayers.org/) + [vue3-openlayers](https://vue3openlayers.netlify.app/) — map rendering
 - [vue-i18n](https://vue-i18n.intlify.dev/) — internationalization
 - [Axios](https://axios-http.com/) — HTTP client
-- [proj4](http://proj4js.org/) — coordinate projections
+- [proj4](http://proj4js.org/) — coordinate projections (Swiss LV95 / LV03)
+- [Cypress](https://www.cypress.io/) — E2E and component testing
+- [oxlint](https://oxc-project.github.io/docs/guide/usage/linter.html) + [ESLint](https://eslint.org/) — linting
 
 ### Known limitations
 
@@ -86,20 +112,29 @@ npm run lint
 
 ```
 ├── src/
-│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, etc.)
-│   ├── composables/      ← Reusable logic (projections)
+│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, ModeToggle, FAQ, Header, Footer, LanguageSwitcher)
+│   ├── composables/      ← Reusable logic (useProjections, useDevice, usePvTarif)
 │   ├── locales/          ← i18n translations (de, fr, it, en)
-│   ├── stores/           ← Pinia stores (map state, language)
-│   ├── types/            ← TypeScript interfaces
-│   ├── views/            ← Page-level components
+│   ├── stores/           ← Pinia stores (mapStore, languageStore)
+│   ├── types/            ← TypeScript interfaces (solar.ts)
+│   ├── views/            ← Page-level components (SonnendachView)
 │   ├── assets/           ← CSS, logos
 │   └── main.ts           ← App entry point
-├── .github/              ← GitHub configuration (workflows, Dependabot)
+├── backend/              ← Lambda function for VESE API proxy
+├── cypress/              ← E2E and component test specs
+├── .github/              ← CI/CD workflows, Dependabot config, auto-merge
 ├── package.json          ← Dependencies and scripts
-├── vite.config.ts        ← Vite configuration
+├── vite.config.ts        ← Vite configuration + VESE dev proxy plugin
+├── cypress.config.ts     ← Cypress test configuration
 ├── tsconfig.json         ← TypeScript configuration
 └── README.md             ← This file
 ```
+
+## CI/CD
+
+- **Frontend pipeline** (`package-and-deploy.yml`): test → build → archive to S3 → deploy to S3 + CloudFront invalidation
+- **Backend pipeline** (`deploy-backend.yml`): packages and deploys the VESE proxy Lambda
+- **Dependabot**: monthly dependency updates with auto-merge for patch/minor versions
 
 ## Contributing
 
