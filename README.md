@@ -38,6 +38,8 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 
 A lightweight AWS Lambda function (`solar-roof-dev-vese-proxy`) acts as a proxy to the VESE PvTarif API. This keeps the API license key server-side and avoids exposing it in the browser. In development, a Vite middleware plugin proxies `/api/pvtarif/*` requests locally with the key from `.env.local`.
 
+> **Note:** Access to the VESE PvTarif API requires a license agreement with VESE. See [PvTarif data documentation](https://www.vese.ch/wp-content/uploads/data-store/pvtarif/app/appPvMapExpert/pvtarif-map-expert-data-de.html) for details and contact VESE to obtain a license key.
+
 ## License & Privacy
 
 This repository is under the [MIT License](LICENSE).
@@ -105,8 +107,8 @@ npm run lint
 
 ### Known limitations
 
-- **Partial building selection**: In areas with row houses, a click may only select part of the visible building due to how `building_id` is assigned in the source data.
-- **Missing addresses**: Some buildings (non-residential, annexes, agricultural) may not display an address, as the GWR register does not cover all structures.
+- **Partial building selection**: In areas with row houses, a click may only select part of the visible building due to how `building_id` is assigned in the source data. (See FAQ in the app)
+- **Missing addresses**: Some buildings (non-residential, annexes, agricultural) may not display an address, as the GWR register does not cover all structures. (See FAQ in the app)
 
 ## Folder Structure
 
@@ -135,13 +137,6 @@ npm run lint
 - **Frontend pipeline** (`package-and-deploy.yml`): test → build → archive to S3 → deploy to S3 + CloudFront invalidation
 - **Backend pipeline** (`deploy-backend.yml`): packages and deploys the VESE proxy Lambda
 - **Dependabot**: monthly dependency updates with auto-merge for patch/minor versions
-
-## Contributing
-
-- Use feature branches for all changes
-- Submit pull requests for review before merging
-- Write meaningful commit messages
-- Code was developed with AI assistance (ai-generated level — Kiro)
 
 ## Contact
 
