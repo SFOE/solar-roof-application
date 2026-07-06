@@ -470,6 +470,7 @@ function suitabilityColor(classNum: number): string {
 
 .faq-link {
   margin: 0.15rem 0 0;
+  margin-top: 1.25rem;
   padding-top: 0.35rem;
   border-top: 1px solid #eee;
   font-size: 0.85rem;
