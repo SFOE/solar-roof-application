@@ -131,16 +131,16 @@
       </div>
     </div>
 
-    <p class="map-link">
-      {{ $t('info_individual_link') }}
-      <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
+    <p class="faq-link">
+      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>
     </p>
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
     </p>
-    <p class="faq-link">
-      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>
+    <p class="map-link">
+      {{ $t('info_individual_link') }}
+      <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
     </p>
   </div>
 
@@ -224,12 +224,16 @@
       </div>
     </div>
 
+    <p class="faq-link">
+      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>
+    </p>
+    <p class="map-link">
+      {{ $t('info_solar_calculator_text') }}
+      <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
+    </p>
     <p class="map-link">
       {{ $t('info_individual_link') }}
       <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>.
-    </p>
-    <p class="faq-link">
-      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>.
     </p>
   </div>
 </template>
