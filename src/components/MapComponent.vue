@@ -10,6 +10,12 @@
 <template>
   <div class="map-container">
     <div ref="mapContainer" class="map-wrapper"></div>
+    <!-- Clear selection button (visible only in multi mode with selections) -->
+    <button
+      v-if="store.selectionMode === 'multi' && store.multiSelectedSurfaces.length > 0"
+      class="clear-selection-btn"
+      @click="clearMultiSelection"
+    >{{ $t('mode_new_selection') }}</button>
     <!-- Attribution bar -->
     <div class="map-attribution">© Données: OFEN, swisstopo</div>
     <!-- Basemap switcher: shows the alternative option -->
@@ -338,6 +344,13 @@ watch(() => store.solarMode, async () => {
 
 // When selection mode changes, reload data for the current location
 watch(() => store.selectionMode, async () => {
+  // When entering multi mode, keep existing highlights
+  if (store.selectionMode === 'multi') {
+    return
+  }
+  // Clear multi-selection highlights when leaving multi mode
+  store.multiSelectedSurfaces = []
+  outlineSource.clear()
   if (!store.clickCoords) return
   await identifyAt(store.clickCoords)
 })
@@ -357,13 +370,17 @@ async function identifyAt(coords: [number, number]) {
   const addressFromSearch = store.selectedAddress
 
   const layerName = store.solarMode === 'roofs' ? LAYER_ROOFS : LAYER_FACADES
-  outlineSource.clear()
+  if (store.selectionMode !== 'multi') {
+    outlineSource.clear()
+  }
 
   try {
     // Step 1: Identify to find the building_id at click point
     // Both roofs and facades need some tolerance for reliable detection
     const isFacades = layerName === LAYER_FACADES
-    const tolerance = isFacades ? 40 : 10
+    // In single/multi mode, use minimal tolerance for precise surface selection
+    const isDetailMode = store.selectionMode === 'single' || store.selectionMode === 'multi'
+    const tolerance = isDetailMode ? 2 : (isFacades ? 40 : 10)
     const identifyParams: Record<string, any> = {
       geometryType: 'esriGeometryPoint',
       geometry: `${coords[0]},${coords[1]}`,
@@ -459,6 +476,153 @@ async function identifyAt(coords: [number, number]) {
       return
     }
 
+    // Multi mode: add/remove surfaces from selection, no clear between clicks
+    if (store.selectionMode === 'multi') {
+      const featureId = firstHit.featureId
+
+      // Check if this surface is already selected (toggle off)
+      const existingIndex = store.multiSelectedSurfaces.findIndex(s => s.featureId === featureId)
+      if (existingIndex >= 0) {
+        // Remove from selection
+        store.multiSelectedSurfaces.splice(existingIndex, 1)
+        // Remove its geometry from the outline layer
+        const features = outlineSource.getFeatures()
+        const toRemove = features.find(f => f.get('featureId') === featureId)
+        if (toRemove) outlineSource.removeFeature(toRemove)
+      } else {
+        // Add to selection: get geometry via identify with returnGeometry
+        try {
+          const geomIdentify = await axios.get(
+            'https://api3.geo.admin.ch/rest/services/api/MapServer/identify',
+            {
+              params: {
+                geometryType: 'esriGeometryPoint',
+                geometry: `${coords[0]},${coords[1]}`,
+                sr: '2056',
+                layers: `all:${layerName}`,
+                tolerance,
+                returnGeometry: true,
+                geometryFormat: 'geojson',
+                limit: 1,
+                imageDisplay: '500,500,96',
+                mapExtent: `${coords[0] - 50},${coords[1] - 50},${coords[0] + 50},${coords[1] + 50}`,
+              },
+            },
+          )
+          const geomHit = geomIdentify.data.results?.find((r: any) => r.featureId > 0)
+          if (geomHit) {
+            const olFeature = geoJsonFormat.readFeature(geomHit)
+            olFeature.set('featureId', featureId)
+            outlineSource.addFeature(olFeature)
+          }
+        } catch { /* highlight failure is non-critical */ }
+
+        // Build surface data and add to array
+        const a = firstHit.attributes
+        store.multiSelectedSurfaces.push({
+          featureId,
+          buildingId,
+          surfaceCount: 1,
+          area: a.flaeche || 0,
+          suitabilityClass: a.klasse || 1,
+          suitabilityDistribution: {
+            class1: a.klasse === 1 ? 100 : 0,
+            class2: a.klasse === 2 ? 100 : 0,
+            class3: a.klasse === 3 ? 100 : 0,
+            class4: a.klasse === 4 ? 100 : 0,
+            class5: a.klasse === 5 ? 100 : 0,
+          },
+          electricityYield: a.stromertrag || 0,
+          electricityWinter: a.stromertrag_winterhalbjahr || 0,
+          electricitySummer: a.stromertrag_sommerhalbjahr || 0,
+          financialReturn: a.finanzertrag || 0,
+          heatYield: a.waermeertrag || 0,
+          heatingDemand: a.bedarf_heizung,
+          hotWaterDemand: a.bedarf_warmwasser,
+          collectorArea: a.flaeche_kollektoren || 0,
+          storageVolume: a.volumen_speicher || 0,
+          irradiation: a.gstrahlung || 0,
+          irradiationPerM2: a.mstrahlung || 0,
+          gwr_egid: a.gwr_egid,
+        })
+      }
+
+      // Aggregate multi-selection into roofData/facadeData for display
+      if (store.multiSelectedSurfaces.length === 0) {
+        store.roofData = null
+        store.facadeData = null
+        store.noData = false
+      } else {
+        const surfaces = store.multiSelectedSurfaces
+        let totalArea = 0, totalElectricity = 0, totalElectricityWinter = 0, totalElectricitySummer = 0
+        let totalFinancial = 0, totalHeatYield = 0, totalCollectorArea = 0
+        let totalIrradiation = 0, totalStorageVolume = 0, weightedIrradiationM2 = 0
+
+        for (const s of surfaces) {
+          totalArea += s.area
+          totalElectricity += s.electricityYield
+          totalElectricityWinter += s.electricityWinter
+          totalElectricitySummer += s.electricitySummer
+          totalFinancial += s.financialReturn
+          totalHeatYield += s.heatYield
+          totalCollectorArea += s.collectorArea
+          totalStorageVolume += s.storageVolume
+          totalIrradiation += s.irradiation
+          weightedIrradiationM2 += s.irradiationPerM2 * s.area
+        }
+
+        const classAreas = [0, 0, 0, 0, 0]
+        for (const s of surfaces) {
+          if (s.suitabilityClass >= 1 && s.suitabilityClass <= 5) {
+            classAreas[s.suitabilityClass - 1] += s.area
+          }
+        }
+
+        const avgIrradiationM2 = totalArea > 0 ? weightedIrradiationM2 / totalArea : 0
+        const mode = store.solarMode
+        let suitClass: number
+        if (mode === 'roofs') {
+          suitClass = avgIrradiationM2 >= 1400 ? 5 : avgIrradiationM2 >= 1200 ? 4 : avgIrradiationM2 >= 1000 ? 3 : avgIrradiationM2 >= 800 ? 2 : 1
+        } else {
+          suitClass = avgIrradiationM2 >= 1200 ? 5 : avgIrradiationM2 >= 1000 ? 4 : avgIrradiationM2 >= 800 ? 3 : avgIrradiationM2 >= 600 ? 2 : 1
+        }
+
+        const multiData = {
+          featureId: 0,
+          buildingId: 0,
+          surfaceCount: surfaces.length,
+          area: totalArea,
+          suitabilityClass: suitClass,
+          suitabilityDistribution: {
+            class1: totalArea > 0 ? Math.round((classAreas[0] / totalArea) * 100) : 0,
+            class2: totalArea > 0 ? Math.round((classAreas[1] / totalArea) * 100) : 0,
+            class3: totalArea > 0 ? Math.round((classAreas[2] / totalArea) * 100) : 0,
+            class4: totalArea > 0 ? Math.round((classAreas[3] / totalArea) * 100) : 0,
+            class5: totalArea > 0 ? Math.round((classAreas[4] / totalArea) * 100) : 0,
+          },
+          electricityYield: totalElectricity,
+          electricityWinter: totalElectricityWinter,
+          electricitySummer: totalElectricitySummer,
+          financialReturn: totalFinancial,
+          heatYield: totalHeatYield,
+          heatingDemand: surfaces[0].heatingDemand,
+          hotWaterDemand: surfaces[0].hotWaterDemand,
+          collectorArea: totalCollectorArea,
+          storageVolume: totalStorageVolume,
+          irradiation: totalIrradiation,
+          irradiationPerM2: avgIrradiationM2,
+          gwr_egid: surfaces[0].gwr_egid,
+        }
+
+        if (store.solarMode === 'roofs') {
+          store.roofData = multiData
+        } else {
+          store.facadeData = multiData
+        }
+      }
+      return
+    }
+
     // Building mode: draw full building outline and center map
     const buildingCenter = await highlightBuilding(buildingId, layerName)
     if (buildingCenter) {
@@ -537,6 +701,14 @@ function zoomTo(center: [number, number], zoomResolution = 0.1) {
   view.animate({ center, resolution: zoomResolution, duration: 1000 })
 }
 
+/** Clears multi-selection (outlines + stored surfaces) */
+function clearMultiSelection() {
+  outlineSource.clear()
+  store.multiSelectedSurfaces = []
+  store.roofData = null
+  store.facadeData = null
+}
+
 defineExpose({ zoomTo, identifyAt })
 
 onMounted(() => {
@@ -563,7 +735,7 @@ onMounted(() => {
       center: swissCenter,
       extent: [2420000, 1030000, 2900000, 1350000],
       resolution: 1500,
-      minResolution: 0.1,
+      minResolution: 0.05,
       maxResolution: 4000,
     }),
   })
@@ -601,6 +773,27 @@ onMounted(() => {
   display: flex;
   gap: 6px;
   z-index: 10;
+}
+
+.clear-selection-btn {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  border: none;
+  background: rgba(255, 255, 255, 0.8);
+  color: #666;
+  font-size: 0.7rem;
+  font-weight: 400;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s, background 0.2s;
+}
+
+.clear-selection-btn:hover {
+  background: rgba(255, 255, 255, 0.95);
+  color: #d32f2f;
 }
 
 .basemap-thumb {

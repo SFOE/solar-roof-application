@@ -12,13 +12,18 @@
   "mode_facades": "Façade",
   "mode_building": "Bâtiment",
   "mode_single": "Individuelle",
+  "mode_multi": "Multiple",
+  "mode_new_selection": "Nouvelle sélection",
+  "mode_selection_label": "Mode de sélection",
   "loading": "Chargement...",
   "no_data_title": "Aucune donnée disponible",
   "no_data_message": "Aucune donnée solaire n'est disponible pour ce point géographique.",
   "info_roof_title": "Informations sur le toit",
   "info_roof_single_title": "Surface de toit individuelle",
+  "info_roof_multi_title": "Sélection multiple toiture",
   "info_facade_title": "Informations sur la façade",
   "info_facade_single_title": "Surface de façade individuelle",
+  "info_facade_multi_title": "Sélection multiple façade",
   "info_general": "Général",
   "info_surfaces": "Surfaces de toit",
   "info_area": "Surface totale",
@@ -69,5 +74,5 @@
   "faq_q7": "Pourquoi aucune adresse n'est affichée pour mon bâtiment ?",
   "faq_a7": "<p>Les adresses affichées proviennent du Registre fédéral des bâtiments et des logements (RegBL). Ce registre ne couvre pas toutes les constructions : les annexes, bâtiments agricoles, garages ou constructions non habitées n'y figurent souvent pas. Dans ces cas, le potentiel solaire est affiché mais sans adresse associée.</p>",
   "faq_q8": "Puis-je réutiliser les données et le code source ?",
-  "faq_a8": "<p><strong>Données :</strong> Les données sont publiées en Open Government Data (OGD) et peuvent être réutilisées librement, y compris à des fins commerciales, à condition de mentionner la source du jeu de données (auteur, titre et lien vers le jeu de données).</p><p>Téléchargement : <a href='https://opendata.swiss/fr/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie' target='_blank'>opendata.swiss ↗</a> · <a href='https://www.geocat.ch/geonetwork/srv/fre/catalog.search#/metadata/b614de5c-2f12-4355-b2c9-7aef2c363ad6' target='_blank'>geocat.ch ↗</a></p><p><strong>Code source :</strong> Le code de cette application est disponible sous licence MIT et peut être réutilisé librement. Le dépôt est accessible sur <a href='https://github.com/SFOE/solar-roof-application' target='_blank'>GitHub ↗</a></p>"
+  "faq_a8": "<p><strong>Données :</strong> Les données sont publiées en Open Government Data (OGD) et peuvent être réutilisées librement, y compris à des fins commerciales, à condition de mentionner la source du jeu de données (auteur, titre et lien vers le jeu de données).</p><p>Téléchargement : <a href='https://opendata.swiss/fr/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie' target='_blank'>opendata.swiss ↗</a> · <a href='https://www.geocat.ch/geonetwork/srv/fre/catalog.search#/metadata/b614de5c-2f12-4355-b2c9-7aef2c363ad6' target='_blank'>geocat.ch ↗</a></p><p><strong>Visualisation :</strong> Les données sont également consultables sur <a href='https://map.geo.admin.ch/?layers=ch.bfe.solarenergie-eignung-daecher' target='_blank'>map.geo.admin.ch ↗</a>, où chaque surface de toit et de façade peut être visualisée individuellement.</p><p><strong>Code source :</strong> Le code de cette application est disponible sous licence MIT et peut être réutilisé librement. Le dépôt est accessible sur <a href='https://github.com/SFOE/solar-roof-application' target='_blank'>GitHub ↗</a></p>"
 }

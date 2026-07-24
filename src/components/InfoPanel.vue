@@ -25,7 +25,7 @@
   <div v-else-if="store.solarMode === 'roofs' && store.roofData" class="info-panel"
        :style="{ borderColor: suitabilityColor(store.roofData.suitabilityClass) }">
     <h3 :style="{ borderBottomColor: suitabilityColor(store.roofData.suitabilityClass) }">
-      {{ store.selectionMode === 'single' ? $t('info_roof_single_title') : $t('info_roof_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
+      {{ store.selectionMode === 'multi' ? $t('info_roof_multi_title') : store.selectionMode === 'single' ? $t('info_roof_single_title') : $t('info_roof_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
     </h3>
 
     <div class="info-grid">
@@ -138,17 +138,13 @@
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
     </p>
-    <p class="map-link">
-      {{ $t('info_individual_link') }}
-      <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
-    </p>
   </div>
 
   <!-- Données façade -->
   <div v-else-if="store.solarMode === 'facades' && store.facadeData" class="info-panel"
        :style="{ borderColor: suitabilityColor(store.facadeData.suitabilityClass) }">
     <h3 :style="{ borderBottomColor: suitabilityColor(store.facadeData.suitabilityClass) }">
-      {{ store.selectionMode === 'single' ? $t('info_facade_single_title') : $t('info_facade_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
+      {{ store.selectionMode === 'multi' ? $t('info_facade_multi_title') : store.selectionMode === 'single' ? $t('info_facade_single_title') : $t('info_facade_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
     </h3>
     <div class="info-grid">
       <div class="info-section">
@@ -230,10 +226,6 @@
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
-    </p>
-    <p class="map-link">
-      {{ $t('info_individual_link') }}
-      <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>.
     </p>
   </div>
 </template>
