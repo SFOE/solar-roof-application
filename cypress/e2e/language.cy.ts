@@ -20,7 +20,7 @@ describe('Language Switching', () => {
     // Verify the main title is in German
     cy.get('h2.page-title').should(
       'contain.text',
-      'Wie viel Strom und Wärme kann mein Dach produzieren?',
+      'Wie viel Strom und Wärme kann mein Gebäude produzieren?',
     )
 
     // Verify search placeholder is in German
@@ -39,15 +39,15 @@ describe('Language Switching', () => {
     // Verify main title is translated to French
     cy.get('h2.page-title').should(
       'contain.text',
-      "Quelle quantité d'électricité et de chaleur mon toit peut-il produire?",
+      "Quelle quantité d'électricité et de chaleur mon bâtiment peut-il produire?",
     )
 
     // Verify search placeholder is translated
     cy.get('input.search-input').should('have.attr', 'placeholder', 'Rechercher une adresse...')
 
     // Verify mode toggle buttons are translated
-    cy.get('.mode-toggle button').eq(0).should('contain.text', 'Toitures')
-    cy.get('.mode-toggle button').eq(1).should('contain.text', 'Façades')
+    cy.get('.mode-toggle button').eq(0).should('contain.text', 'Toiture')
+    cy.get('.mode-toggle button').eq(1).should('contain.text', 'Façade')
   })
 
   it('changing language with data displayed translates InfoPanel labels but preserves numeric values', () => {
@@ -106,15 +106,15 @@ describe('Language Switching', () => {
     // Verify the main title is in French
     cy.get('h2.page-title').should(
       'contain.text',
-      "Quelle quantité d'électricité et de chaleur mon toit peut-il produire?",
+      "Quelle quantité d'électricité et de chaleur mon bâtiment peut-il produire?",
     )
 
     // Verify search placeholder is in French
     cy.get('input.search-input').should('have.attr', 'placeholder', 'Rechercher une adresse...')
 
     // Verify mode toggle buttons are in French
-    cy.get('.mode-toggle button').eq(0).should('contain.text', 'Toitures')
-    cy.get('.mode-toggle button').eq(1).should('contain.text', 'Façades')
+    cy.get('.mode-toggle button').eq(0).should('contain.text', 'Toiture')
+    cy.get('.mode-toggle button').eq(1).should('contain.text', 'Façade')
 
     // Verify the language selector shows FR as selected
     cy.get('.language-switcher select').should('have.value', 'fr')

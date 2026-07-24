@@ -18,12 +18,13 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 - Address search with autocomplete via the [geo.admin.ch SearchServer API](https://api3.geo.admin.ch/rest/services/api/SearchServer)
 - Automatic aggregation of all roof surfaces per building with outline highlighting
 - **Individual surface selection mode** — view data for a single clicked surface instead of the whole building
+- **Multiple selection mode** — click multiple surfaces to see aggregated totals across your selection
 - PV and solar thermal production estimates based on the [solar suitability dataset](https://opendata.swiss/en/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie)
 - Suitability distribution visualization (% of area per class)
 - PV feed-in tariff display per municipality via the [VESE PvTarif API](https://www.vese.ch/pvtarif/) (Lambda proxy in production)
 - GWR address and commune lookup after building identification
-- Toggle between roofs and facades
-- Toggle between building-level (aggregated) and individual surface view
+- Toggle between roofs and facades (layer selection)
+- Toggle between building-level, individual surface, and multiple selection modes
 - Multilingual (DE, FR, IT, EN) — switchable via UI or `?lang=xx` query parameter
 - Responsive design with mobile detection
 - FAQ section with links to official resources
@@ -116,7 +117,7 @@ npm run lint
 
 ```
 ├── src/
-│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, ModeToggle, FAQ, Header, Footer, LanguageSwitcher)
+│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, ModeToggle, SelectionModeToggle, FAQ, Header, Footer, LanguageSwitcher)
 │   ├── composables/      ← Reusable logic (useProjections, useDevice, usePvTarif)
 │   ├── locales/          ← i18n translations (de, fr, it, en)
 │   ├── stores/           ← Pinia stores (mapStore, languageStore)
