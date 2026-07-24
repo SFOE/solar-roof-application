@@ -1,24 +1,44 @@
 <!--
   ModeToggle.vue
 
-  Boutons toggle pour basculer entre le mode "Toitures" et "Façades".
-  Change le mode dans le store → la carte et le panneau d'info réagissent.
+  Two rows of toggle buttons:
+  1. Solar layer: Roofs / Facades (which data layer to display)
+  2. Selection granularity: Building / Individual (aggregate or single surface)
 -->
 
 <template>
-  <div class="mode-toggle">
-    <button
-      :class="{ active: store.solarMode === 'roofs' }"
-      @click="store.setSolarMode('roofs')"
-    >
-      {{ $t('mode_roofs') }}
-    </button>
-    <button
-      :class="{ active: store.solarMode === 'facades' }"
-      @click="store.setSolarMode('facades')"
-    >
-      {{ $t('mode_facades') }}
-    </button>
+  <div class="mode-toggles">
+    <!-- Row 1: Layer toggle (Roofs / Facades) -->
+    <div class="mode-toggle">
+      <button
+        :class="{ active: store.solarMode === 'roofs' }"
+        @click="store.setSolarMode('roofs')"
+      >
+        {{ $t('mode_roofs') }}
+      </button>
+      <button
+        :class="{ active: store.solarMode === 'facades' }"
+        @click="store.setSolarMode('facades')"
+      >
+        {{ $t('mode_facades') }}
+      </button>
+    </div>
+
+    <!-- Row 2: Selection mode toggle (Building / Individual) -->
+    <div class="mode-toggle">
+      <button
+        :class="{ active: store.selectionMode === 'building' }"
+        @click="store.setSelectionMode('building')"
+      >
+        {{ $t('mode_building') }}
+      </button>
+      <button
+        :class="{ active: store.selectionMode === 'single' }"
+        @click="store.setSelectionMode('single')"
+      >
+        {{ $t('mode_single') }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -28,16 +48,23 @@ const store = useMapStore()
 </script>
 
 <style scoped>
+.mode-toggles {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0;
+}
+
 .mode-toggle {
   display: flex;
   justify-content: center;
   gap: 0;
-  margin: 0.5rem 0;
 }
 
 .mode-toggle button {
-  padding: 8px 24px;
-  font-size: 0.9rem;
+  padding: 5px 24px;
+  font-size: 0.85rem;
   border: 2px solid #ccc;
   background: #fff;
   color: #555;

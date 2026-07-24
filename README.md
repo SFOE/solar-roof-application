@@ -17,11 +17,13 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 - Basemap switcher (satellite / grey map)
 - Address search with autocomplete via the [geo.admin.ch SearchServer API](https://api3.geo.admin.ch/rest/services/api/SearchServer)
 - Automatic aggregation of all roof surfaces per building with outline highlighting
+- **Individual surface selection mode** — view data for a single clicked surface instead of the whole building
 - PV and solar thermal production estimates based on the [solar suitability dataset](https://opendata.swiss/en/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie)
 - Suitability distribution visualization (% of area per class)
 - PV feed-in tariff display per municipality via the [VESE PvTarif API](https://www.vese.ch/pvtarif/) (Lambda proxy in production)
 - GWR address and commune lookup after building identification
 - Toggle between roofs and facades
+- Toggle between building-level (aggregated) and individual surface view
 - Multilingual (DE, FR, IT, EN) — switchable via UI or `?lang=xx` query parameter
 - Responsive design with mobile detection
 - FAQ section with links to official resources

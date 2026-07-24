@@ -286,6 +286,12 @@ watch(() => store.solarMode, async () => {
   updateSolarLayer()
   if (!store.lastBuildingId || !store.clickCoords) return
 
+  // In single mode, re-identify at the same coords to get the individual surface
+  if (store.selectionMode === 'single') {
+    await identifyAt(store.clickCoords)
+    return
+  }
+
   const layerName = store.solarMode === 'roofs' ? LAYER_ROOFS : LAYER_FACADES
   const buildingId = store.lastBuildingId
 
@@ -328,6 +334,12 @@ watch(() => store.solarMode, async () => {
     store.selectedAddress = addressFromSearch
     store.loading = false
   }
+})
+
+// When selection mode changes, reload data for the current location
+watch(() => store.selectionMode, async () => {
+  if (!store.clickCoords) return
+  await identifyAt(store.clickCoords)
 })
 
 /**
@@ -378,7 +390,76 @@ async function identifyAt(coords: [number, number]) {
     const buildingId = firstHit.attributes.building_id
     store.lastBuildingId = buildingId
 
-    // Draw building outline and center map
+    // In single mode: display only the clicked surface, no aggregation
+    if (store.selectionMode === 'single') {
+      // Re-call identify with returnGeometry=true to get the surface geometry for highlighting
+      outlineSource.clear()
+      try {
+        const geomIdentify = await axios.get(
+          'https://api3.geo.admin.ch/rest/services/api/MapServer/identify',
+          {
+            params: {
+              geometryType: 'esriGeometryPoint',
+              geometry: `${coords[0]},${coords[1]}`,
+              sr: '2056',
+              layers: `all:${layerName}`,
+              tolerance,
+              returnGeometry: true,
+              geometryFormat: 'geojson',
+              limit: 1,
+              imageDisplay: '500,500,96',
+              mapExtent: `${coords[0] - 50},${coords[1] - 50},${coords[0] + 50},${coords[1] + 50}`,
+            },
+          },
+        )
+        const geomHit = geomIdentify.data.results?.find((r: any) => r.featureId > 0)
+        if (geomHit) {
+          const olFeature = geoJsonFormat.readFeature(geomHit)
+          outlineSource.addFeature(olFeature)
+          const ext = olFeature.getGeometry()!.getExtent()
+          const center = getCenter(ext) as [number, number]
+          mapInstance.value?.getView().animate({ center, duration: 500 })
+        }
+      } catch { /* non-critical — data still displays, just no highlight */ }
+
+      // Build single surface data directly from identify attributes
+      const a = firstHit.attributes
+      const singleData = {
+        featureId: firstHit.featureId,
+        buildingId,
+        surfaceCount: 1,
+        area: a.flaeche || 0,
+        suitabilityClass: a.klasse || 1,
+        suitabilityDistribution: {
+          class1: a.klasse === 1 ? 100 : 0,
+          class2: a.klasse === 2 ? 100 : 0,
+          class3: a.klasse === 3 ? 100 : 0,
+          class4: a.klasse === 4 ? 100 : 0,
+          class5: a.klasse === 5 ? 100 : 0,
+        },
+        electricityYield: a.stromertrag || 0,
+        electricityWinter: a.stromertrag_winterhalbjahr || 0,
+        electricitySummer: a.stromertrag_sommerhalbjahr || 0,
+        financialReturn: a.finanzertrag || 0,
+        heatYield: a.waermeertrag || 0,
+        heatingDemand: a.bedarf_heizung,
+        hotWaterDemand: a.bedarf_warmwasser,
+        collectorArea: a.flaeche_kollektoren || 0,
+        storageVolume: a.volumen_speicher || 0,
+        irradiation: a.gstrahlung || 0,
+        irradiationPerM2: a.mstrahlung || 0,
+        gwr_egid: a.gwr_egid,
+      }
+
+      if (store.solarMode === 'roofs') {
+        store.roofData = singleData
+      } else {
+        store.facadeData = singleData
+      }
+      return
+    }
+
+    // Building mode: draw full building outline and center map
     const buildingCenter = await highlightBuilding(buildingId, layerName)
     if (buildingCenter) {
       const view = mapInstance.value?.getView()

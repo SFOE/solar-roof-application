@@ -25,7 +25,7 @@
   <div v-else-if="store.solarMode === 'roofs' && store.roofData" class="info-panel"
        :style="{ borderColor: suitabilityColor(store.roofData.suitabilityClass) }">
     <h3 :style="{ borderBottomColor: suitabilityColor(store.roofData.suitabilityClass) }">
-      {{ $t('info_roof_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
+      {{ store.selectionMode === 'single' ? $t('info_roof_single_title') : $t('info_roof_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
     </h3>
 
     <div class="info-grid">
@@ -148,7 +148,7 @@
   <div v-else-if="store.solarMode === 'facades' && store.facadeData" class="info-panel"
        :style="{ borderColor: suitabilityColor(store.facadeData.suitabilityClass) }">
     <h3 :style="{ borderBottomColor: suitabilityColor(store.facadeData.suitabilityClass) }">
-      {{ $t('info_facade_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
+      {{ store.selectionMode === 'single' ? $t('info_facade_single_title') : $t('info_facade_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
     </h3>
     <div class="info-grid">
       <div class="info-section">
