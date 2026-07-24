@@ -365,6 +365,7 @@ async function identifyAt(coords: [number, number]) {
   store.roofData = null
   store.facadeData = null
   store.noData = false
+  store.communeId = null
 
   // Preserve address if it came from the search bar
   const addressFromSearch = store.selectedAddress
@@ -655,8 +656,9 @@ async function identifyAt(coords: [number, number]) {
   } catch (error) {
     console.error('Identify error:', error)
   } finally {
-    // Look up the building address and commune via GWR using EGID
+    // Look up the building address and commune via GWR using EGID or building_id
     const egid = store.roofData?.gwr_egid || store.facadeData?.gwr_egid
+    const buildingIdForLookup = store.lastBuildingId
     if (egid) {
       try {
         const addrResp = await axios.get(
@@ -678,6 +680,45 @@ async function identifyAt(coords: [number, number]) {
             store.selectedAddress = `${a.strname_deinr}, ${a.dplz4} ${a.dplzname}`
           }
           store.communeId = a.ggdenr ? parseInt(a.ggdenr) : null
+        }
+      } catch { /* non-critical */ }
+    } else if (buildingIdForLookup) {
+      // Fallback: use building_id to find EGID via the solar layer, then lookup GWR
+      try {
+        const layerForLookup = store.solarMode === 'roofs' ? LAYER_ROOFS : LAYER_FACADES
+        const findResp = await axios.get(
+          'https://api3.geo.admin.ch/rest/services/api/MapServer/find',
+          {
+            params: {
+              layer: layerForLookup, searchText: buildingIdForLookup,
+              searchField: 'building_id', contains: false,
+              returnGeometry: false, sr: '2056', limit: 1,
+            },
+          },
+        )
+        const firstSurface = findResp.data.results?.find((r: any) => r.featureId > 0)
+        const fallbackEgid = firstSurface?.attributes?.gwr_egid
+        if (fallbackEgid) {
+          const addrResp = await axios.get(
+            'https://api3.geo.admin.ch/rest/services/api/MapServer/find',
+            {
+              params: {
+                layer: 'ch.bfs.gebaeude_wohnungs_register',
+                searchText: fallbackEgid, searchField: 'egid',
+                contains: false, returnGeometry: false, limit: 1,
+              },
+            },
+          )
+          const addrHit = addrResp.data.results?.find(
+            (r: any) => String(r.attributes.egid) === String(fallbackEgid),
+          )
+          if (addrHit) {
+            const a = addrHit.attributes
+            if (!addressFromSearch) {
+              store.selectedAddress = `${a.strname_deinr}, ${a.dplz4} ${a.dplzname}`
+            }
+            store.communeId = a.ggdenr ? parseInt(a.ggdenr) : null
+          }
         }
       } catch { /* non-critical */ }
     }
