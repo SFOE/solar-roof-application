@@ -20,6 +20,9 @@ export const useMapStore = defineStore('map', () => {
   const roofData = ref<RoofData | null>(null)
   const facadeData = ref<FacadeData | null>(null)
 
+  // Multi-selection: array of individual surface data objects
+  const multiSelectedSurfaces = ref<RoofData[]>([])
+
   // Loading state (during API calls)
   const loading = ref(false)
 
@@ -50,17 +53,38 @@ export const useMapStore = defineStore('map', () => {
     facadeData.value = null
   }
 
-  /** Switch between building/single selection mode and clear data */
+  /** Switch between building/single/multi selection mode */
   function setSelectionMode(mode: SelectionMode) {
+    const previousMode = selectionMode.value
     selectionMode.value = mode
+
+    // When switching TO multi, keep current data and seed multi array from it
+    if (mode === 'multi') {
+      const currentData = solarMode.value === 'roofs' ? roofData.value : facadeData.value
+      if (currentData && multiSelectedSurfaces.value.length === 0) {
+        // Seed multi-selection with the currently displayed data
+        multiSelectedSurfaces.value = [currentData]
+      }
+      return
+    }
+
+    // When leaving multi, clear multi array but keep roofData/facadeData intact
+    if (previousMode === 'multi') {
+      multiSelectedSurfaces.value = []
+      return
+    }
+
+    // Switching between building and single: clear data to force re-identify
     roofData.value = null
     facadeData.value = null
+    multiSelectedSurfaces.value = []
   }
 
   /** Clear all selected data */
   function clearSelection() {
     roofData.value = null
     facadeData.value = null
+    multiSelectedSurfaces.value = []
     clickCoords.value = null
   }
 
@@ -69,6 +93,7 @@ export const useMapStore = defineStore('map', () => {
     selectionMode,
     roofData,
     facadeData,
+    multiSelectedSurfaces,
     loading,
     clickCoords,
     lastBuildingId,

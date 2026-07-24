@@ -10,6 +10,7 @@ import FooterComponent from '@/components/FooterComponent.vue'
 import MapComponent from '@/components/MapComponent.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
+import SelectionModeToggle from '@/components/SelectionModeToggle.vue'
 import InfoPanel from '@/components/InfoPanel.vue'
 import FaqSection from '@/components/FaqSection.vue'
 
@@ -68,6 +69,7 @@ watch(
     <div ref="mapSection">
       <MapComponent ref="mapRef" />
     </div>
+    <SelectionModeToggle />
     <div ref="infoPanelSection" style="padding-bottom: 1rem;">
       <InfoPanel />
     </div>
