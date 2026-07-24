@@ -15,8 +15,8 @@ export interface Coordinates {
 /** Mode d'affichage : toitures ou façades */
 export type SolarMode = 'roofs' | 'facades'
 
-/** Granularité de sélection : bâtiment entier ou surface individuelle */
-export type SelectionMode = 'building' | 'single'
+/** Granularité de sélection : bâtiment entier, surface individuelle, ou multi-sélection */
+export type SelectionMode = 'building' | 'single' | 'multi'
 
 /** Suitability distribution: percentage of area per class */
 export interface SuitabilityDistribution {
