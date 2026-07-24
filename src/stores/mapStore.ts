@@ -7,11 +7,14 @@
 
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { RoofData, FacadeData, SolarMode } from '@/types/solar'
+import type { RoofData, FacadeData, SolarMode, SelectionMode } from '@/types/solar'
 
 export const useMapStore = defineStore('map', () => {
   // Current mode: roofs or facades
   const solarMode = ref<SolarMode>('roofs')
+
+  // Selection granularity: building (aggregated) or single (individual surface)
+  const selectionMode = ref<SelectionMode>('building')
 
   // Selected roof/facade data
   const roofData = ref<RoofData | null>(null)
@@ -47,6 +50,13 @@ export const useMapStore = defineStore('map', () => {
     facadeData.value = null
   }
 
+  /** Switch between building/single selection mode and clear data */
+  function setSelectionMode(mode: SelectionMode) {
+    selectionMode.value = mode
+    roofData.value = null
+    facadeData.value = null
+  }
+
   /** Clear all selected data */
   function clearSelection() {
     roofData.value = null
@@ -56,6 +66,7 @@ export const useMapStore = defineStore('map', () => {
 
   return {
     solarMode,
+    selectionMode,
     roofData,
     facadeData,
     loading,
@@ -66,6 +77,7 @@ export const useMapStore = defineStore('map', () => {
     noData,
     hasData,
     setSolarMode,
+    setSelectionMode,
     clearSelection,
   }
 })
