@@ -97,7 +97,7 @@
           <span class="info-value">{{ fmt(store.roofData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE</a>)</span>
+          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE ↗</a>)</span>
           <span class="info-value">{{ tarifValue }}</span>
         </div>
         <div class="info-row">
@@ -137,6 +137,10 @@
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
+    </p>
+    <p class="map-link">
+      {{ $t('info_geoadmin_text') }}
+      <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
     </p>
   </div>
 
@@ -186,7 +190,7 @@
           <span class="info-value">{{ fmt(store.facadeData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE</a>)</span>
+          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE ↗</a>)</span>
           <span class="info-value">{{ tarifValue }}</span>
         </div>
         <div class="info-row">
@@ -226,6 +230,10 @@
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
+    </p>
+    <p class="map-link">
+      {{ $t('info_geoadmin_text') }}
+      <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
     </p>
   </div>
 </template>
@@ -270,7 +278,7 @@ function geoAdminUrl(mode: 'roofs' | 'facades'): string {
     ? 'ch.bfe.solarenergie-eignung-daecher'
     : 'ch.bfe.solarenergie-eignung-fassaden'
 
-  return `https://map.geo.admin.ch/?lang=${locale.value}&layers=${layer}&E=${coords[0].toFixed(0)}&N=${coords[1].toFixed(0)}&zoom=10&sr=2056`
+  return `https://map.geo.admin.ch/?lang=${locale.value}&bgLayer=ch.swisstopo.swissimage&layers=${layer}&E=${coords[0].toFixed(0)}&N=${coords[1].toFixed(0)}&zoom=13&sr=2056`
 }
 
 function fmt(value: number | undefined): string {
