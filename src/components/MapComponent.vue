@@ -822,9 +822,9 @@ onMounted(() => {
   right: 12px;
   padding: 3px 8px;
   border-radius: 3px;
-  border: none;
+  border: 1px solid #d32f2f;
   background: rgba(255, 255, 255, 0.8);
-  color: #666;
+  color: #d32f2f;
   font-size: 0.7rem;
   font-weight: 400;
   cursor: pointer;
@@ -833,8 +833,8 @@ onMounted(() => {
 }
 
 .clear-selection-btn:hover {
-  background: rgba(255, 255, 255, 0.95);
-  color: #d32f2f;
+  background: #d32f2f;
+  color: #fff;
 }
 
 .basemap-thumb {

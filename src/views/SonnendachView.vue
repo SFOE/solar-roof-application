@@ -74,6 +74,8 @@ watch(
       <InfoPanel />
     </div>
 
+    <p class="app-description">{{ $t('app_description') }}</p>
+
     <FaqSection />
   </div>
   <FooterComponent />
@@ -85,5 +87,15 @@ watch(
   margin: 1rem 0 0.75rem;
   font-size: 1.4rem;
   color: #333;
+}
+
+.app-description {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.6;
+  text-align: justify;
+  margin: 1rem auto;
+  padding: 0.75rem 0;
+  max-width: 1000px;
 }
 </style>

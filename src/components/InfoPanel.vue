@@ -79,7 +79,7 @@
       </div>
 
       <div class="info-section">
-        <h4>{{ $t('info_pv_title') }}</h4>
+        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.roofData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2h2"/><path d="m14.28 14-4.56 8"/><path d="m21 22-1.558-4H4.558"/><path d="M3 10v2"/><path d="M6.245 15.04A2 2 0 0 1 8 14h12a1 1 0 0 1 .864 1.505l-3.11 5.457A2 2 0 0 1 16 22H4a1 1 0 0 1-.863-1.506z"/><path d="M7 2a4 4 0 0 1-4 4"/><path d="m8.66 7.66 1.41 1.41"/></svg>{{ $t('info_pv_title') }}</h4>
         <div class="info-row">
           <span class="info-label">{{ $t('info_electricity_yield') }}</span>
           <span class="info-value">{{ fmt(store.roofData.electricityYield) }} kWh/{{ $t('info_year') }}</span>
@@ -97,7 +97,7 @@
           <span class="info-value">{{ fmt(store.roofData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE</a>)</span>
+          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE ↗</a>)</span>
           <span class="info-value">{{ tarifValue }}</span>
         </div>
         <div class="info-row">
@@ -107,7 +107,7 @@
       </div>
 
       <div class="info-section">
-        <h4>{{ $t('info_thermal_title') }}</h4>
+        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.roofData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 8a4 4 0 0 0-1.645 7.647"/><path d="M2 12h2"/><path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><path d="m4.93 4.93 1.41 1.41"/><path d="m6.34 17.66-1.41 1.41"/></svg>{{ $t('info_thermal_title') }}</h4>
         <div class="info-row">
           <span class="info-label">{{ $t('info_heat_yield') }}</span>
           <span class="info-value">{{ fmt(store.roofData.heatYield) }} kWh/{{ $t('info_year') }}</span>
@@ -137,6 +137,10 @@
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
+    </p>
+    <p class="map-link">
+      {{ $t('info_geoadmin_text') }}
+      <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
     </p>
   </div>
 
@@ -168,7 +172,7 @@
       </div>
 
       <div class="info-section">
-        <h4>{{ $t('info_pv_title') }}</h4>
+        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.facadeData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2h2"/><path d="m14.28 14-4.56 8"/><path d="m21 22-1.558-4H4.558"/><path d="M3 10v2"/><path d="M6.245 15.04A2 2 0 0 1 8 14h12a1 1 0 0 1 .864 1.505l-3.11 5.457A2 2 0 0 1 16 22H4a1 1 0 0 1-.863-1.506z"/><path d="M7 2a4 4 0 0 1-4 4"/><path d="m8.66 7.66 1.41 1.41"/></svg>{{ $t('info_pv_title') }}</h4>
         <div class="info-row">
           <span class="info-label">{{ $t('info_electricity_yield') }}</span>
           <span class="info-value">{{ fmt(store.facadeData.electricityYield) }} kWh/{{ $t('info_year') }}</span>
@@ -186,7 +190,7 @@
           <span class="info-value">{{ fmt(store.facadeData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
-          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE</a>)</span>
+          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE ↗</a>)</span>
           <span class="info-value">{{ tarifValue }}</span>
         </div>
         <div class="info-row">
@@ -196,7 +200,7 @@
       </div>
 
       <div class="info-section">
-        <h4>{{ $t('info_thermal_title') }}</h4>
+        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.facadeData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 8a4 4 0 0 0-1.645 7.647"/><path d="M2 12h2"/><path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><path d="m4.93 4.93 1.41 1.41"/><path d="m6.34 17.66-1.41 1.41"/></svg>{{ $t('info_thermal_title') }}</h4>
         <div class="info-row">
           <span class="info-label">{{ $t('info_heat_yield') }}</span>
           <span class="info-value">{{ fmt(store.facadeData.heatYield) }} kWh/{{ $t('info_year') }}</span>
@@ -226,6 +230,10 @@
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
       <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
+    </p>
+    <p class="map-link">
+      {{ $t('info_geoadmin_text') }}
+      <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
     </p>
   </div>
 </template>
@@ -270,7 +278,7 @@ function geoAdminUrl(mode: 'roofs' | 'facades'): string {
     ? 'ch.bfe.solarenergie-eignung-daecher'
     : 'ch.bfe.solarenergie-eignung-fassaden'
 
-  return `https://map.geo.admin.ch/?lang=${locale.value}&layers=${layer}&E=${coords[0].toFixed(0)}&N=${coords[1].toFixed(0)}&zoom=10&sr=2056`
+  return `https://map.geo.admin.ch/?lang=${locale.value}&bgLayer=ch.swisstopo.swissimage&layers=${layer}&E=${coords[0].toFixed(0)}&N=${coords[1].toFixed(0)}&zoom=13&sr=2056`
 }
 
 function fmt(value: number | undefined): string {
@@ -341,6 +349,15 @@ function suitabilityColor(classNum: number): string {
 .info-section h4 {
   margin: 0 0 0.5rem;
   font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.section-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
 }
 
 .info-row {
