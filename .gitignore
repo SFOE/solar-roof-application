@@ -42,3 +42,6 @@ __screenshots__/
 
 # Kiro
 .kiro/
+
+#documentation
+doc/
