@@ -36,6 +36,7 @@ function toggle(index: number) {
 
 const faqItems = computed(() => [
   { question: t('faq_q1'), answer: t('faq_a1') },
+  { question: t('faq_q9'), answer: t('faq_a9') },
   { question: t('faq_q2'), answer: t('faq_a2') },
   { question: t('faq_q3'), answer: t('faq_a3') },
   { question: t('faq_q4'), answer: t('faq_a4') },
