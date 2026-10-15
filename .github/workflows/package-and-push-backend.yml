@@ -1,17 +1,20 @@
 name: Package and Push Backend (VESE proxy Lambda)
 
-# BACKEND only, MANUAL only (the frontend deploys automatically: package-and-deploy-frontend.yml).
+# BACKEND only, MANUAL only, DEV only (the frontend deploys automatically:
+# package-and-deploy-frontend.yml).
 #
-# Packages the VESE proxy Lambda (zip) and pushes the versioned zip to the backend artefact
-# store (same model as damquake). It does NOT deploy. The workflow is run by hand with the
-# tag to publish; the Lambda is updated afterwards, when the infrastructure repo
-# (prometheon-solar-roof-{dev,prod}) sets source_code_version, in deploy.auto.tfvars.json,
-# to the pushed tag and that change is pushed.
+# Packages the VESE proxy Lambda (zip) and pushes the versioned zip to the dev backend
+# artefact store (same model as damquake). It does NOT deploy. The workflow is run by hand
+# with the tag to publish; the Lambda is updated afterwards, when the infrastructure repo
+# (prometheon-solar-roof-dev) sets source_code_version, in deploy.auto.tfvars.json, to the
+# pushed tag and that change is pushed.
 # The file written in S3 is named solar-roof-vese-proxy-<tag>.zip.
 #
 # The tag is required and must be new: re-pushing an existing tag does not change the S3 key,
 # so the infrastructure would see nothing to update. 'latest' is refused for that reason.
 # The Lambda code is not covered by lint-test-build.yml. Run this workflow from main.
+#
+# AWS role: the GitHub secret SFOE_SOLAR_ROOF_BACKEND_PIPELINE_ROLE (ARN of the pipeline role).
 
 on:
   workflow_dispatch:
@@ -20,14 +23,6 @@ on:
         description: "New artifact version tag (e.g. 'v1.2.0'). 'latest' is not allowed."
         required: true
         type: string
-      environment:
-        description: "Target environment"
-        required: true
-        type: choice
-        options:
-          - dev
-          - prod
-        default: "dev"
 
 permissions:
   id-token: write
@@ -71,7 +66,7 @@ jobs:
       artifact-name: solar-roof-vese-proxy
       artifact-type: .zip
       tag-name: ${{ inputs.version }}
-      s3-bucket: solar-roof-${{ inputs.environment }}-backend-artifact-store
+      s3-bucket: solar-roof-dev-backend-artifact-store
       scan-type: archive
     secrets:
-      aws-role: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
+      aws-role: ${{ secrets.SFOE_SOLAR_ROOF_BACKEND_PIPELINE_ROLE }}
