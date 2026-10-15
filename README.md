@@ -147,19 +147,20 @@ npm run build-only && npm run test:e2e
 
 - **Lint, Test & Build** (`lint-test-build.yml`): lint, type-check, build and E2E tests. It runs by itself on every pull request, and it is called by the frontend pipeline on every push to `main`. It never deploys anything.
 - **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): **automatic** on every push to `main` (this includes merged Dependabot updates). It runs Lint, Test & Build first. Only if everything passes, it builds the site, archives a versioned artifact (`sha-<commit>`) to S3, then deploys to **dev** (S3 sync + CloudFront invalidation). A manual run lets you choose `dev` or `prod` and an optional version; prod is never deployed automatically.
-- **Package and Push Backend** (`package-and-push-backend.yml`): **manual only**. Run it from `main` with a new version tag (for example `v1.2.0`). `latest` and tags with unusual characters are refused; the workflow does not check whether the tag was already used, so pick one that was not. It packages the VESE proxy Lambda (zip) and pushes `solar-roof-vese-proxy-<tag>.zip` to the backend artefact store. It does not deploy: afterwards, set `source_code_version` to the same tag in `deploy.auto.tfvars.json` of the infrastructure repo and push (damquake-style).
+- **Package and Push Backend** (`package-and-push-backend.yml`): **manual only, dev only**. Run it from `main` with a new version tag (for example `v1.2.0`). `latest` and tags with unusual characters are refused; the workflow does not check whether the tag was already used, so pick one that was not. It packages the VESE proxy Lambda (zip) and pushes `solar-roof-vese-proxy-<tag>.zip` to the backend artefact store. It does not deploy: afterwards, set `source_code_version` to the same tag in `deploy.auto.tfvars.json` of the infrastructure repo and push (damquake-style).
 - **Dependabot**: monthly dependency updates with auto-merge for patch/minor versions. Once merged, the frontend is redeployed to dev. TypeScript major updates are ignored until `typescript-eslint` supports TypeScript 7.
 
 ### GitHub secrets required
 
 | Secret | Description |
 |--------|-------------|
-| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV` | AWS IAM role ARN (OIDC) for the dev account — artifact push + deploy |
-| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | AWS IAM role ARN (OIDC) for the prod account |
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV` | AWS IAM role ARN (OIDC) for the dev account — used by the **frontend** workflow (artifact push + deploy) |
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | AWS IAM role ARN (OIDC) for the prod account — frontend workflow |
+| `SFOE_SOLAR_ROOF_BACKEND_PIPELINE_ROLE` | AWS IAM role ARN (OIDC) for the dev account — used by the **backend** workflow (Lambda artifact push). Same ARN as the frontend role: the infrastructure creates a single pipeline role |
 | `CLOUDFRONT_DISTRIBUTION_ID_DEV` | CloudFront distribution ID (dev) for cache invalidation |
 | `CLOUDFRONT_DISTRIBUTION_ID_PROD` | CloudFront distribution ID (prod) for cache invalidation |
 
-When run manually, the `package-and-deploy-frontend.yml` and `package-and-push-backend.yml` workflows take an `environment` input (`dev`/`prod`) and select the matching role/bucket/distribution automatically. The automatic frontend deployment on `main` always targets `dev`.
+Only dev is wired up for now. The frontend workflow still has an `environment` input (`dev`/`prod`) for a manual run, but the prod secrets do not exist yet. The backend workflow is dev only. The automatic frontend deployment on `main` always targets `dev`.
 
 > **Note:** The VESE API key (stored in AWS Secrets Manager) is **not** a GitHub secret and is **not** used by the application. The infrastructure repo references the secret by name. The frontend only ever uses the public API Gateway URL (`VITE_PVTARIF_API_URL`).
 
