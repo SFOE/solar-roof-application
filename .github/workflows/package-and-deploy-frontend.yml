@@ -1,26 +1,30 @@
 name: Package and Deploy Frontend
 
-# FRONTEND only (the VESE proxy Lambda has its own workflow: package-and-push-backend.yml).
-# Tests are NOT run here, they run on every push/PR via lint-test-build.yml.
-# This pipeline packages the built site as a versioned artifact, pushes it to the artefact
-# store, then deploys it (S3 sync + CloudFront invalidation).
-# Triggered on release (uses the release tag as the version)
-# or manually with an explicit version + environment.
+# FRONTEND only (the VESE proxy Lambda has its own manual workflow: package-and-push-backend.yml).
 #
-# NOTE: a `release` trigger has no `environment` input, so it falls back to
-# 'dev'. Deploy to prod via a manual `workflow_dispatch` run with
-# environment=prod (only dev is wired up for now).
+# On every push to main (this includes merged Dependabot updates, which keeps the libraries
+# maintained): lint, type-check, build and E2E tests run first (lint-test-build.yml). Only if
+# they pass, the site is packaged as a versioned artifact, pushed to the artefact store, then
+# deployed to dev (S3 sync + CloudFront invalidation).
+#
+# Manual run (workflow_dispatch): same pipeline, with a choice of environment (dev or prod)
+# and an optional version. Use it for prod, which is never deployed automatically.
+#
+# The artifact version is the input `version` when given, otherwise `sha-<7 first chars of
+# the commit>`. The frontend artifact is only a record: the deployed site is the one built in
+# the same run.
 
 on:
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       version:
-        description: "Artifact version tag (e.g. 'latest' or 'v1.2.0'). Defaults to the release tag when triggered by a release."
+        description: "Artifact version tag (e.g. 'v1.2.0'). Leave empty to use the commit (sha-xxxxxxx)."
         required: false
         type: string
-        default: "latest"
+        default: ""
       environment:
         description: "Target environment"
         required: true
@@ -34,12 +38,36 @@ permissions:
   id-token: write
   contents: read
 
+# Never run two deployments of the same environment at the same time
+# (e.g. two merges in a row). The second waits for the first to finish.
+concurrency:
+  group: deploy-frontend-${{ inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
 jobs:
+  checks:
+    uses: ./.github/workflows/lint-test-build.yml
+
   build:
+    needs: checks
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Compute artifact version
+        id: version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ -n "$INPUT_VERSION" ]; then
+            TAG="$INPUT_VERSION"
+          else
+            TAG="sha-${GITHUB_SHA::7}"
+          fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -71,7 +99,7 @@ jobs:
     with:
       artifact-name: solar-roof-frontend
       artifact-type: .zip
-      tag-name: ${{ github.event.release.tag_name || inputs.version }}
+      tag-name: ${{ needs.build.outputs.tag }}
       s3-bucket: solar-roof-${{ inputs.environment || 'dev' }}-frontend-artifact-store
       scan-type: archive
     secrets:

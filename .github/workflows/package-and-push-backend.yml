@@ -1,27 +1,25 @@
 name: Package and Push Backend (VESE proxy Lambda)
 
-# BACKEND only (the frontend has its own workflow: package-and-deploy-frontend.yml).
+# BACKEND only, MANUAL only (the frontend deploys automatically: package-and-deploy-frontend.yml).
+#
 # Packages the VESE proxy Lambda (zip) and pushes the versioned zip to the backend artefact
-# store (same model as damquake). It does NOT deploy: the Lambda is updated when the
-# infrastructure repo (prometheon-solar-roof-{dev,prod}) sets source_code_version, in
-# deploy.auto.tfvars.json, to the pushed tag.
+# store (same model as damquake). It does NOT deploy. The workflow is run by hand with the
+# tag to publish; the Lambda is updated afterwards, when the infrastructure repo
+# (prometheon-solar-roof-{dev,prod}) sets source_code_version, in deploy.auto.tfvars.json,
+# to the pushed tag and that change is pushed.
 # The file written in S3 is named solar-roof-vese-proxy-<tag>.zip.
 #
-# NOTE: a `release` trigger has no `environment` input, so it falls back to
-# 'dev' (only dev is wired up for now).
-#
-# Tests run on every push/PR via lint-test-build.yml, not here.
+# The tag is required and must be new: re-pushing an existing tag does not change the S3 key,
+# so the infrastructure would see nothing to update. 'latest' is refused for that reason.
+# The Lambda code is not covered by lint-test-build.yml. Run this workflow from main.
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       version:
-        description: "Artifact version tag (e.g. 'latest' or 'v1.2.0'). Defaults to the release tag when triggered by a release."
-        required: false
+        description: "New artifact version tag (e.g. 'v1.2.0'). 'latest' is not allowed."
+        required: true
         type: string
-        default: "latest"
       environment:
         description: "Target environment"
         required: true
@@ -39,6 +37,19 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Check the version tag
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [ "$INPUT_VERSION" = "latest" ]; then
+            echo "::error::'latest' is not allowed: use a new tag such as v1.2.0."
+            exit 1
+          fi
+          if ! echo "$INPUT_VERSION" | grep -Eq '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
+            echo "::error::Invalid tag '$INPUT_VERSION'. Allowed: letters, digits, '.', '_' and '-'."
+            exit 1
+          fi
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -59,8 +70,8 @@ jobs:
     with:
       artifact-name: solar-roof-vese-proxy
       artifact-type: .zip
-      tag-name: ${{ github.event.release.tag_name || inputs.version }}
-      s3-bucket: solar-roof-${{ inputs.environment || 'dev' }}-backend-artifact-store
+      tag-name: ${{ inputs.version }}
+      s3-bucket: solar-roof-${{ inputs.environment }}-backend-artifact-store
       scan-type: archive
     secrets:
       aws-role: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
