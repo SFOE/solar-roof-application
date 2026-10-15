@@ -9,6 +9,11 @@ updates:
         patterns:
           - "*"
     open-pull-requests-limit: 1
+    ignore:
+      # typescript-eslint does not support TypeScript 7 yet (ESLint fails to load).
+      # Remove this rule once typescript-eslint supports it.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
     commit-message:
