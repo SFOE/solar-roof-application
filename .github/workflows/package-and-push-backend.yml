@@ -1,0 +1,66 @@
+name: Package and Push Backend (VESE proxy Lambda)
+
+# BACKEND only (the frontend has its own workflow: package-and-deploy-frontend.yml).
+# Packages the VESE proxy Lambda (zip) and pushes the versioned zip to the backend artefact
+# store (same model as damquake). It does NOT deploy: the Lambda is updated when the
+# infrastructure repo (prometheon-solar-roof-{dev,prod}) sets source_code_version, in
+# deploy.auto.tfvars.json, to the pushed tag.
+# The file written in S3 is named solar-roof-vese-proxy-<tag>.zip.
+#
+# NOTE: a `release` trigger has no `environment` input, so it falls back to
+# 'dev' (only dev is wired up for now).
+#
+# Tests run on every push/PR via lint-test-build.yml, not here.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Artifact version tag (e.g. 'latest' or 'v1.2.0'). Defaults to the release tag when triggered by a release."
+        required: false
+        type: string
+        default: "latest"
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: "dev"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Single-file Lambda: boto3 is provided by the Lambda runtime, nothing to install.
+      - name: Package Lambda code
+        run: zip -j solar-roof-vese-proxy.zip backend/lambda_function.py
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: solar-roof-vese-proxy
+          path: solar-roof-vese-proxy.zip
+          retention-days: 1
+
+  scan-push:
+    needs: build
+    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v9
+    with:
+      artifact-name: solar-roof-vese-proxy
+      artifact-type: .zip
+      tag-name: ${{ github.event.release.tag_name || inputs.version }}
+      s3-bucket: solar-roof-${{ inputs.environment || 'dev' }}-backend-artifact-store
+      scan-type: archive
+    secrets:
+      aws-role: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}

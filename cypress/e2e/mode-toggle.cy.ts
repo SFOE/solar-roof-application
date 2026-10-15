@@ -58,9 +58,9 @@ describe('Mode Toggle (Roofs / Facades)', () => {
     cy.clickMap(400, 300)
     cy.wait('@identifyRequest')
 
-    // Verify InfoPanel is displayed with aggregated data (unified "Auswahl" title)
+    // Verify InfoPanel is displayed with aggregated data (unified "Information" title)
     cy.get('.info-panel').should('exist').and('be.visible')
-    cy.get('.info-panel h3').should('contain.text', 'Auswahl')
+    cy.get('.info-panel h3').should('contain.text', 'Information')
     cy.get('.info-panel .info-grid').should('exist')
 
     // Switching layer clears the selection (featureIds differ across layers)

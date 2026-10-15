@@ -39,7 +39,7 @@ describe('Language Switching', () => {
     // Verify main title is translated to French
     cy.get('h2.page-title').should(
       'contain.text',
-      "Quelle quantité d'électricité et de chaleur mon bâtiment peut-il produire?",
+      "Quelle quantité d'électricité et de chaleur mon bâtiment peut-il produire ?",
     )
 
     // Verify search placeholder is translated
@@ -54,7 +54,8 @@ describe('Language Switching', () => {
     cy.visit('/')
 
     // Trigger a search and select to load data into the InfoPanel
-    cy.get('input.search-input').clear().type('Bahnhof')
+    cy.get('input.search-input').clear()
+    cy.get('input.search-input').type('Bahnhof')
     cy.wait('@searchRequest')
     cy.get('.search-results li').first().click()
     cy.wait('@identifyRequest')
@@ -106,7 +107,7 @@ describe('Language Switching', () => {
     // Verify the main title is in French
     cy.get('h2.page-title').should(
       'contain.text',
-      "Quelle quantité d'électricité et de chaleur mon bâtiment peut-il produire?",
+      "Quelle quantité d'électricité et de chaleur mon bâtiment peut-il produire ?",
     )
 
     // Verify search placeholder is in French

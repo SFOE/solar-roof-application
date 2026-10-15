@@ -94,11 +94,15 @@ describe('VESE Tariff Integration', () => {
     // would append a licenseKey to the browser request, or call VESE directly)
     // makes this test fail.
     const outgoingUrls: string[] = []
+
+    // Cypress calls the handlers in REVERSE order of definition and stops at the first one
+    // that replies. The catch-all must therefore be defined AFTER the stubs (it only records
+    // the URL and lets the request go on to the stub), otherwise it never sees the tariff calls.
+    cy.interceptVese()
     cy.intercept('GET', '**', (req) => {
       outgoingUrls.push(req.url)
     })
 
-    cy.interceptVese()
     cy.visit('/')
 
     cy.searchAndSelect('Bahnhof')

@@ -12,13 +12,6 @@ import fr from '@/locales/fr.json'
 import it from '@/locales/it.json'
 import en from '@/locales/en.json'
 
-import {
-  Map as OLMapPlugin,
-  Layers as OLLayersPlugin,
-  Sources as OLSourcesPlugin,
-  MapControls as OLControlsPlugin,
-} from 'vue3-openlayers'
-
 const i18n = createI18n({
   legacy: false,
   locale: 'de',
@@ -29,18 +22,17 @@ const i18n = createI18n({
 const app = createApp(App)
 
 app.use(createPinia())
-app.use(OLMapPlugin)
-app.use(OLLayersPlugin)
-app.use(OLSourcesPlugin)
-app.use(OLControlsPlugin)
 app.use(i18n)
 app.use(router)
 
 app.mount('#app')
 
+// Keep the browser tab title and the <html lang> attribute in sync with the UI language.
 watch(
   () => i18n.global.locale.value,
-  () => {
+  (locale) => {
     document.title = i18n.global.t('page_title')
+    document.documentElement.lang = locale
   },
+  { immediate: true },
 )

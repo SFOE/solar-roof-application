@@ -1,0 +1,108 @@
+name: Package and Deploy Frontend
+
+# FRONTEND only (the VESE proxy Lambda has its own workflow: package-and-push-backend.yml).
+# Tests are NOT run here, they run on every push/PR via lint-test-build.yml.
+# This pipeline packages the built site as a versioned artifact, pushes it to the artefact
+# store, then deploys it (S3 sync + CloudFront invalidation).
+# Triggered on release (uses the release tag as the version)
+# or manually with an explicit version + environment.
+#
+# NOTE: a `release` trigger has no `environment` input, so it falls back to
+# 'dev'. Deploy to prod via a manual `workflow_dispatch` run with
+# environment=prod (only dev is wired up for now).
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Artifact version tag (e.g. 'latest' or 'v1.2.0'). Defaults to the release tag when triggered by a release."
+        required: false
+        type: string
+        default: "latest"
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: "dev"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build production
+        run: npm run build-only
+
+      - name: Package dist folder
+        run: |
+          cd dist
+          zip -r ../solar-roof-frontend.zip .
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: solar-roof-frontend
+          path: solar-roof-frontend.zip
+          retention-days: 5
+
+  archive:
+    needs: build
+    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v9
+    with:
+      artifact-name: solar-roof-frontend
+      artifact-type: .zip
+      tag-name: ${{ github.event.release.tag_name || inputs.version }}
+      s3-bucket: solar-roof-${{ inputs.environment || 'dev' }}-frontend-artifact-store
+      scan-type: archive
+    secrets:
+      aws-role: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
+
+  deploy:
+    needs: [build, archive]
+    runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: ${{ inputs.environment || 'dev' }}
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: solar-roof-frontend
+
+      - name: Unzip artifact
+        run: |
+          mkdir -p dist
+          unzip solar-roof-frontend.zip -d dist
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
+          aws-region: eu-central-1
+
+      - name: Deploy to S3
+        run: aws s3 sync dist/ "s3://solar-roof-${ENVIRONMENT}-frontend/" --delete
+
+      - name: Invalidate CloudFront cache
+        run: |
+          DISTRIBUTION_ID="${{ inputs.environment == 'prod' && secrets.CLOUDFRONT_DISTRIBUTION_ID_PROD || secrets.CLOUDFRONT_DISTRIBUTION_ID_DEV }}"
+          aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"

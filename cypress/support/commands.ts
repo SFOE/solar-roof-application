@@ -12,6 +12,8 @@ import {
 
 // --- TypeScript declarations for custom commands ---
 declare global {
+  // Cypress documents this namespace as the way to add custom commands to its types.
+  // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace Cypress {
     interface Chainable {
       /**
@@ -56,10 +58,8 @@ Cypress.Commands.add('interceptVese', (options?: { error?: boolean }) => {
 })
 
 Cypress.Commands.add('searchAndSelect', (address: string) => {
-  cy.get('input[type="search"], input[placeholder*="Adresse"], .search-input input, input.search-input')
-    .first()
-    .clear()
-    .type(address)
+  cy.get('input.search-input').clear()
+  cy.get('input.search-input').type(address)
 
   // Wait for the search request to complete and select the first result
   cy.wait('@searchRequest')

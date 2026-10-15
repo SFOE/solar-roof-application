@@ -25,6 +25,12 @@ export default defineConfigWithVueTs(
     ],
   },
 
+  {
+    // The swisstopo and VESE APIs return untyped JSON: `any` is reported as a warning, not an error.
+    name: 'app/external-json-any',
+    rules: { '@typescript-eslint/no-explicit-any': 'warn' },
+  },
+
   ...pluginOxlint.buildFromOxlintConfigFile('.oxlintrc.json'),
 
   skipFormatting,

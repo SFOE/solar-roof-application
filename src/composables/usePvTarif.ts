@@ -61,11 +61,8 @@ export function usePvTarif() {
     try {
       // Step 1: Get EVUs in this municipality
       const muniUrl = `${baseUrl}/muni?idofs=${communeId}`
-
-      console.log('[VESE] Fetching EVUs for commune:', communeId, muniUrl)
       const muniResp = await axios.get(muniUrl)
       const muniData = muniResp.data
-      console.log('[VESE] Muni response:', muniData)
 
       // Strip BOM from property keys (VESE API bug)
       const cleanEvus = (muniData.evus || []).map((evu: any) => {
@@ -89,14 +86,9 @@ export function usePvTarif() {
       const evu = cleanEvus[0]
 
       try {
-        console.log('[VESE] EVU object:', JSON.stringify(evu))
-        const elcomId = evu.nrElcom || evu.nrelcom || evu.NrElcom || evu.id
-        const evuUrl = `${baseUrl}/evu?evuId=${elcomId}&year=${currentYear}`
-
-        console.log('[VESE] Fetching tariff for EVU:', elcomId, evu.Name || evu.name)
+        const evuUrl = `${baseUrl}/evu?evuId=${evu.nrElcom}&year=${currentYear}`
         const evuResp = await axios.get(evuUrl)
         const evuData = evuResp.data
-        console.log('[VESE] EVU response:', evuData)
 
         // Clean BOM from EVU response keys too
         const cleanEvuData: any = {}
@@ -136,7 +128,6 @@ export function usePvTarif() {
       console.error('[VESE] Error:', e)
     } finally {
       loading.value = false
-      console.log('[VESE] Final tarifData:', tarifData.value)
     }
   }
 

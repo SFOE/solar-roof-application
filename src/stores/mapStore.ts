@@ -6,7 +6,7 @@
  *
  * Selection model:
  * - `selectedSurfaces` is the single source of truth (unique by featureId).
- * - Both selection modes ('building' / 'roof') accumulate into this array.
+ * - Both selection modes ('single' / 'multi') write into this array.
  * - `aggregated` and `summary` are derived (computed) from `selectedSurfaces`.
  */
 
@@ -143,9 +143,6 @@ export const useMapStore = defineStore('map', () => {
   // Coordinates of the last map click
   const clickCoords = ref<[number, number] | null>(null)
 
-  // Building ID of the last identified building
-  const lastBuildingId = ref<number | null>(null)
-
   // Selected address (from search or GWR lookup)
   const selectedAddress = ref('')
 
@@ -233,7 +230,6 @@ export const useMapStore = defineStore('map', () => {
     selectedSurfaces,
     loading,
     clickCoords,
-    lastBuildingId,
     selectedAddress,
     communeId,
     postalCode,

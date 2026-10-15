@@ -1,26 +1,26 @@
 /**
- * E2E tests for roof-surface selection (single cumulative mode).
+ * E2E tests for the selection mode (Single / Multiple).
  *
- * The app now has a single selection behavior: clicking a roof pane adds it
- * (cumulative multi-select); clicking it again removes it. There is no
- * building/roof mode toggle anymore.
+ * - Single (default): each click replaces the selection (explore the map).
+ * - Multiple: each click adds/removes a roof surface (cumulative selection).
  *
  * Covers:
- * - No selection-mode toggle is rendered
+ * - The selection toggle is rendered with "Einzeln" active by default
  * - Clicking the map selects a surface and shows the unified InfoPanel
- * - Summary banner appears with economic potential (CHF)
- * - "New selection" button appears when there is a selection and clears it
+ * - The summary banner appears with the economic potential (CHF)
+ * - The "New selection" button only exists in Multiple mode and clears the selection
  */
 
-describe('Roof surface selection (single cumulative mode)', () => {
+describe('Selection mode (single / multiple)', () => {
   beforeEach(() => {
     cy.interceptGeoAdmin()
     cy.interceptVese()
     cy.visit('/')
   })
 
-  it('No selection-mode toggle is rendered', () => {
-    cy.get('.selection-toggle').should('not.exist')
+  it('Selection toggle is rendered with "Einzeln" active by default', () => {
+    cy.get('.selection-toggle button').contains('Einzeln').should('have.class', 'active')
+    cy.get('.selection-toggle button').contains('Mehrfach').should('not.have.class', 'active')
   })
 
   it('Clicking map selects a surface and shows the InfoPanel', () => {
@@ -40,7 +40,18 @@ describe('Roof surface selection (single cumulative mode)', () => {
     cy.get('.summary-banner').should('contain.text', 'CHF')
   })
 
-  it('"New selection" button appears with a selection and clears it on click', () => {
+  it('"New selection" button is not shown in Single mode', () => {
+    cy.clickMap(400, 300)
+    cy.wait('@identifyRequest')
+
+    cy.get('.info-panel').should('exist').and('be.visible')
+    cy.get('.clear-selection-btn').should('not.exist')
+  })
+
+  it('In Multiple mode, "New selection" button appears with a selection and clears it', () => {
+    cy.get('.selection-toggle button').contains('Mehrfach').click()
+    cy.get('.selection-toggle button').contains('Mehrfach').should('have.class', 'active')
+
     cy.clickMap(400, 300)
     cy.wait('@identifyRequest')
 

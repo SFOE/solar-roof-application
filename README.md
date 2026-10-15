@@ -16,17 +16,17 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 - Interactive map with solar suitability overlay (WMTS from swisstopo)
 - Basemap switcher (satellite / grey map)
 - Address search with autocomplete via the [geo.admin.ch SearchServer API](https://api3.geo.admin.ch/rest/services/api/SearchServer)
-- Automatic aggregation of all roof surfaces per building with outline highlighting
-- **Individual surface selection mode** — view data for a single clicked surface instead of the whole building
+- Outline highlighting of the selected surfaces
+- **Single selection mode** (default) — each click shows the data of one roof or facade surface
 - **Multiple selection mode** — click multiple surfaces to see aggregated totals across your selection
 - PV and solar thermal production estimates based on the [solar suitability dataset](https://opendata.swiss/en/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie)
 - Suitability distribution visualization (% of area per class)
 - PV feed-in tariff display per municipality via the [VESE PvTarif API](https://www.vese.ch/pvtarif/) (Lambda proxy in production)
 - GWR address and commune lookup after building identification
 - Toggle between roofs and facades (layer selection)
-- Toggle between building-level, individual surface, and multiple selection modes
+- Summary banner with the overall suitability and the economic potential of the selection
 - Multilingual (DE, FR, IT, EN) — switchable via UI or `?lang=xx` query parameter
-- Responsive design with mobile detection
+- Responsive design
 - FAQ section with links to official resources
 
 ### Data sources
@@ -39,7 +39,7 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 
 ### Backend (VESE Proxy)
 
-A lightweight AWS Lambda function (`solar-roof-dev-vese-proxy`) acts as a proxy to the VESE PvTarif API. This keeps the API license key server-side and avoids exposing it in the browser. In development, a Vite middleware plugin proxies `/api/pvtarif/*` requests locally with the key from `.env.local`.
+A lightweight AWS Lambda function (`solar-roof-dev-vese-proxy`) acts as a proxy to the VESE PvTarif API. This keeps the API license key server-side and avoids exposing it in the browser. In production the key is stored in **AWS Secrets Manager** and fetched by the Lambda at runtime (never committed to git, never a plaintext Lambda env var). In development, a Vite middleware plugin proxies `/api/pvtarif/*` requests locally with the key from `.env.local`.
 
 > **Note:** Access to the VESE PvTarif API requires a license agreement with VESE. See [PvTarif data documentation](https://www.vese.ch/wp-content/uploads/data-store/pvtarif/app/appPvMapExpert/pvtarif-map-expert-data-de.html) for details and contact VESE to obtain a license key.
 
@@ -94,8 +94,14 @@ npm run preview
 # Type check
 npm run type-check
 
-# Lint
+# Lint (check only, as in CI)
+npm run lint-check
+
+# Lint and auto-fix
 npm run lint
+
+# End-to-end tests (needs a production build first)
+npm run build-only && npm run test:e2e
 ```
 
 ### Tech stack
@@ -103,7 +109,7 @@ npm run lint
 - [Vue 3](https://vuejs.org/) + [TypeScript](https://www.typescriptlang.org/)
 - [Vite](https://vitejs.dev/) — build tool (with custom VESE proxy plugin for dev)
 - [Pinia](https://pinia.vuejs.org/) — state management
-- [OpenLayers](https://openlayers.org/) + [vue3-openlayers](https://vue3openlayers.netlify.app/) — map rendering
+- [OpenLayers](https://openlayers.org/) — map rendering
 - [vue-i18n](https://vue-i18n.intlify.dev/) — internationalization
 - [Axios](https://axios-http.com/) — HTTP client
 - [proj4](http://proj4js.org/) — coordinate projections (Swiss LV95 / LV03)
@@ -119,8 +125,8 @@ npm run lint
 
 ```
 ├── src/
-│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, ModeToggle, SelectionModeToggle, FAQ, Header, Footer, LanguageSwitcher)
-│   ├── composables/      ← Reusable logic (useProjections, useDevice, usePvTarif)
+│   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, SummaryBanner, ModeToggle, SelectionModeToggle, FAQ, Header, Footer, LanguageSwitcher)
+│   ├── composables/      ← Reusable logic (useProjections, useSolarIdentify, usePvTarif)
 │   ├── locales/          ← i18n translations (de, fr, it, en)
 │   ├── stores/           ← Pinia stores (mapStore, languageStore)
 │   ├── types/            ← TypeScript interfaces (solar.ts)
@@ -139,9 +145,23 @@ npm run lint
 
 ## CI/CD
 
-- **Frontend pipeline** (`package-and-deploy.yml`): test → build → archive to S3 → deploy to S3 + CloudFront invalidation
-- **Backend pipeline** (`deploy-backend.yml`): packages and deploys the VESE proxy Lambda
+- **Lint, Test & Build** (`lint-test-build.yml`): runs on every push and pull request: lint, type-check, build, and E2E tests. Surfaces problems and fixes early, upstream of deployment.
+- **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): on release / manual dispatch. Builds the site, archives a versioned artifact to S3, then deploys it (S3 sync + CloudFront invalidation). No tests here (they run in `lint-test-build.yml`).
+- **Package and Push Backend** (`package-and-push-backend.yml`): on release / manual dispatch. Packages the VESE proxy Lambda (zip) and pushes the versioned zip (`solar-roof-vese-proxy-<tag>.zip`) to the backend artefact store. It does not deploy: the infrastructure repo deploys a chosen version via `source_code_version` in `deploy.auto.tfvars.json` (damquake-style).
 - **Dependabot**: monthly dependency updates with auto-merge for patch/minor versions
+
+### GitHub secrets required
+
+| Secret | Description |
+|--------|-------------|
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV` | AWS IAM role ARN (OIDC) for the dev account — artifact push + deploy |
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | AWS IAM role ARN (OIDC) for the prod account |
+| `CLOUDFRONT_DISTRIBUTION_ID_DEV` | CloudFront distribution ID (dev) for cache invalidation |
+| `CLOUDFRONT_DISTRIBUTION_ID_PROD` | CloudFront distribution ID (prod) for cache invalidation |
+
+The `package-and-deploy-frontend.yml` and `package-and-push-backend.yml` workflows take an `environment` input (`dev`/`prod`) and select the matching role/bucket/distribution automatically.
+
+> **Note:** The VESE API key (stored in AWS Secrets Manager) is **not** a GitHub secret and is **not** used by the application. The infrastructure repo references the secret by name. The frontend only ever uses the public API Gateway URL (`VITE_PVTARIF_API_URL`).
 
 ## Contact
 
