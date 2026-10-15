@@ -154,9 +154,8 @@ npm run build-only && npm run test:e2e
 
 | Secret | Description |
 |--------|-------------|
-| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV` | AWS IAM role ARN (OIDC) for the dev account — used by the **frontend** workflow (artifact push + deploy) |
-| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | AWS IAM role ARN (OIDC) for the prod account — frontend workflow |
-| `SFOE_SOLAR_ROOF_BACKEND_PIPELINE_ROLE` | AWS IAM role ARN (OIDC) for the dev account — used by the **backend** workflow (Lambda artifact push). Same ARN as the frontend role: the infrastructure creates a single pipeline role |
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV` | ARN of the IAM **role** `SFOE-solar-roof-application-pipeline-role` (OIDC, dev account). Used by the frontend workflow (artifact push + deploy) **and** by the backend workflow (Lambda artifact push). It is the ARN of the role, not of a bucket |
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | Same, for the prod account (not used yet) |
 | `CLOUDFRONT_DISTRIBUTION_ID_DEV` | CloudFront distribution ID (dev) for cache invalidation |
 | `CLOUDFRONT_DISTRIBUTION_ID_PROD` | CloudFront distribution ID (prod) for cache invalidation |
 

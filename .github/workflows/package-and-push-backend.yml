@@ -14,7 +14,8 @@ name: Package and Push Backend (VESE proxy Lambda)
 # so the infrastructure would see nothing to update. 'latest' is refused for that reason.
 # The Lambda code is not covered by lint-test-build.yml. Run this workflow from main.
 #
-# AWS role: the GitHub secret SFOE_SOLAR_ROOF_BACKEND_PIPELINE_ROLE (ARN of the pipeline role).
+# AWS role: the GitHub secret SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV (ARN of the pipeline role),
+# the same one as the frontend workflow: the infrastructure creates a single pipeline role.
 
 on:
   workflow_dispatch:
@@ -69,4 +70,4 @@ jobs:
       s3-bucket: solar-roof-dev-backend-artifact-store
       scan-type: archive
     secrets:
-      aws-role: ${{ secrets.SFOE_SOLAR_ROOF_BACKEND_PIPELINE_ROLE }}
+      aws-role: ${{ secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
