@@ -6,8 +6,11 @@
  * 1. Get list of energy providers (EVUs) in the municipality
  * 2. Get tariff details for the first EVU
  *
- * In development: calls VESE directly with the API key from .env.local
- * In production: will call our Lambda proxy
+ * The API license key is NEVER handled in the browser. It lives only
+ * server-side:
+ *   - in development, the Vite dev proxy (see vite.config.ts) injects it
+ *   - in production, the Lambda proxy injects it
+ * The frontend only ever talks to the proxy/Lambda, never to VESE directly.
  */
 
 import axios from 'axios'
@@ -23,12 +26,14 @@ export interface EvuTarif {
   year: number
 }
 
-const VESE_API_KEY = import.meta.env.VITE_VESE_API_KEY || ''
+// Public proxy/Lambda URL (safe to expose). The VESE license key is NOT read
+// here: reading VITE_VESE_API_KEY in frontend code would inline it into the
+// browser bundle and leak it. The key is injected only server-side.
 const PVTARIF_PROXY_URL = import.meta.env.VITE_PVTARIF_API_URL || ''
 
 /**
- * In dev: use Vite proxy at /api/pvtarif (no API key in browser)
- * In prod: use Lambda proxy URL from env var
+ * In dev: use the Vite proxy at /api/pvtarif (key injected by the dev server).
+ * In prod: use the Lambda proxy URL from the env var (key injected by Lambda).
  */
 function getBaseUrl(): string {
   if (PVTARIF_PROXY_URL) return PVTARIF_PROXY_URL

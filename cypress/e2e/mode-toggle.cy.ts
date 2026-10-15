@@ -53,19 +53,21 @@ describe('Mode Toggle (Roofs / Facades)', () => {
     cy.get('.info-panel').should('contain.text', 'kWh')
   })
 
-  it('Toggling mode clears previously displayed data', () => {
-    // First, trigger a building identification in roofs mode
+  it('Toggling layer (Dach ↔ Fassade) clears the current selection', () => {
+    // First, trigger an identification in roofs mode
     cy.clickMap(400, 300)
     cy.wait('@identifyRequest')
 
-    // Verify InfoPanel is displayed with roof data (German: "Dach" in title)
+    // Verify InfoPanel is displayed with aggregated data (unified "Auswahl" title)
     cy.get('.info-panel').should('exist').and('be.visible')
-    cy.get('.info-panel h3').should('contain.text', 'Dach')
+    cy.get('.info-panel h3').should('contain.text', 'Auswahl')
+    cy.get('.info-panel .info-grid').should('exist')
 
-    // Now toggle to Facades mode — roof data should be cleared
+    // Switching layer clears the selection (featureIds differ across layers)
     cy.get('.mode-toggle button').contains('Fassade').click()
 
-    // The roof-specific panel (with roof title) should be gone.
-    cy.get('.info-panel h3').should('not.contain.text', 'Dach')
+    // The detailed panel and the clear-selection button should be gone.
+    cy.get('.info-panel .info-grid').should('not.exist')
+    cy.get('.clear-selection-btn').should('not.exist')
   })
 })

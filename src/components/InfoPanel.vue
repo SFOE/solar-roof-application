@@ -1,18 +1,19 @@
 <!--
   InfoPanel.vue
 
-  Panneau d'information qui s'affiche sous la carte quand l'utilisateur
-  clique sur un toit ou une façade. La couleur du panneau correspond
-  au statut d'aptitude du bâtiment (même code couleur que la carte).
+  Detailed information panel shown below the map when the user has a selection.
+  Consumes the unified aggregation from the store (store.aggregated), which
+  combines all selected surfaces (buildings + individual surfaces) into one total.
+  The panel border color matches the global suitability class (same as the map).
 -->
 
 <template>
-  <!-- Chargement -->
+  <!-- Loading -->
   <div v-if="store.loading" class="info-panel loading">
     <p>{{ $t('loading') }}</p>
   </div>
 
-  <!-- Pas de données -->
+  <!-- No data -->
   <div v-else-if="store.noData" class="info-panel no-data">
     <h3>{{ $t('no_data_title') }}</h3>
     <p class="no-data-text">{{ $t('no_data_message') }}</p>
@@ -21,80 +22,84 @@
     </p>
   </div>
 
-  <!-- Données toiture -->
-  <div v-else-if="store.solarMode === 'roofs' && store.roofData" class="info-panel"
-       :style="{ borderColor: suitabilityColor(store.roofData.suitabilityClass) }">
-    <h3 :style="{ borderBottomColor: suitabilityColor(store.roofData.suitabilityClass) }">
-      {{ store.selectionMode === 'multi' ? $t('info_roof_multi_title') : store.selectionMode === 'single' ? $t('info_roof_single_title') : $t('info_roof_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
+  <!-- Aggregated selection data -->
+  <div
+    v-else-if="agg"
+    class="info-panel"
+    :style="{ borderColor: suitabilityColor(agg.suitabilityClass) }"
+  >
+    <h3 :style="{ borderBottomColor: suitabilityColor(agg.suitabilityClass) }">
+      {{ $t('info_selection_title') }}
+      <span v-if="store.selectedSurfaces.length > 1" class="title-count">
+        ({{ agg.surfaceCount }} {{ $t('info_surfaces') }})
+      </span>
+      <span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
     </h3>
 
     <div class="info-grid">
+      <!-- General -->
       <div class="info-section">
         <h4>{{ $t('info_general') }}</h4>
         <div class="info-row no-border">
           <span class="info-label">{{ $t('info_suitability') }}</span>
           <span class="info-value">
-            <span :class="'badge badge-' + store.roofData.suitabilityClass">
-              {{ suitabilityLabel(store.roofData.suitabilityClass) }}
+            <span :class="'badge badge-' + agg.suitabilityClass">
+              {{ suitabilityLabel(agg.suitabilityClass) }}
             </span>
           </span>
         </div>
         <!-- Suitability distribution -->
         <div class="distribution">
           <span class="dist-title">{{ $t('info_distribution') }}</span>
-          <div v-if="store.roofData.suitabilityDistribution.class5 > 0" class="dist-row">
-            <span class="dist-square badge-5"></span>
-            <span class="dist-label">{{ $t('suitability_5') }}</span>
-            <span class="dist-value">{{ store.roofData.suitabilityDistribution.class5 }}%</span>
-          </div>
-          <div v-if="store.roofData.suitabilityDistribution.class4 > 0" class="dist-row">
-            <span class="dist-square badge-4"></span>
-            <span class="dist-label">{{ $t('suitability_4') }}</span>
-            <span class="dist-value">{{ store.roofData.suitabilityDistribution.class4 }}%</span>
-          </div>
-          <div v-if="store.roofData.suitabilityDistribution.class3 > 0" class="dist-row">
-            <span class="dist-square badge-3"></span>
-            <span class="dist-label">{{ $t('suitability_3') }}</span>
-            <span class="dist-value">{{ store.roofData.suitabilityDistribution.class3 }}%</span>
-          </div>
-          <div v-if="store.roofData.suitabilityDistribution.class2 > 0" class="dist-row">
-            <span class="dist-square badge-2"></span>
-            <span class="dist-label">{{ $t('suitability_2') }}</span>
-            <span class="dist-value">{{ store.roofData.suitabilityDistribution.class2 }}%</span>
-          </div>
-          <div v-if="store.roofData.suitabilityDistribution.class1 > 0" class="dist-row">
-            <span class="dist-square badge-1"></span>
-            <span class="dist-label">{{ $t('suitability_1') }}</span>
-            <span class="dist-value">{{ store.roofData.suitabilityDistribution.class1 }}%</span>
+          <div v-for="c in [5, 4, 3, 2, 1]" :key="c">
+            <div v-if="distributionValue(c) > 0" class="dist-row">
+              <span class="dist-square" :class="'badge-' + c"></span>
+              <span class="dist-label">{{ $t('suitability_' + c) }}</span>
+              <span class="dist-value">{{ distributionValue(c) }}%</span>
+            </div>
           </div>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_area') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.area) }} m²</span>
+          <span class="info-value">{{ fmt(agg.area) }} m²</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_irradiation') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.irradiationPerM2) }} kWh/m²/{{ $t('info_year') }}</span>
+          <span class="info-value">{{ fmt(agg.irradiationPerM2) }} kWh/m²/{{ $t('info_year') }}</span>
         </div>
+        <!-- Orientation & tilt: only for a single individual surface (roof mode) -->
+        <template v-if="agg.isSingleSurface">
+          <div class="info-row">
+            <span class="info-label">{{ $t('info_orientation') }}</span>
+            <span class="info-value">{{ fmtOrientation(agg.orientation) }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">{{ $t('info_inclination') }}</span>
+            <span class="info-value">{{ fmtDeg(agg.tilt) }}</span>
+          </div>
+        </template>
       </div>
 
+      <!-- Photovoltaics -->
       <div class="info-section">
-        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.roofData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2h2"/><path d="m14.28 14-4.56 8"/><path d="m21 22-1.558-4H4.558"/><path d="M3 10v2"/><path d="M6.245 15.04A2 2 0 0 1 8 14h12a1 1 0 0 1 .864 1.505l-3.11 5.457A2 2 0 0 1 16 22H4a1 1 0 0 1-.863-1.506z"/><path d="M7 2a4 4 0 0 1-4 4"/><path d="m8.66 7.66 1.41 1.41"/></svg>{{ $t('info_pv_title') }}</h4>
+        <h4>
+          <svg class="section-icon" :style="{ color: suitabilityColor(agg.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2h2"/><path d="m14.28 14-4.56 8"/><path d="m21 22-1.558-4H4.558"/><path d="M3 10v2"/><path d="M6.245 15.04A2 2 0 0 1 8 14h12a1 1 0 0 1 .864 1.505l-3.11 5.457A2 2 0 0 1 16 22H4a1 1 0 0 1-.863-1.506z"/><path d="M7 2a4 4 0 0 1-4 4"/><path d="m8.66 7.66 1.41 1.41"/></svg>{{ $t('info_pv_title') }}
+        </h4>
         <div class="info-row">
           <span class="info-label">{{ $t('info_electricity_yield') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.electricityYield) }} kWh/{{ $t('info_year') }}</span>
+          <span class="info-value">{{ fmt(agg.electricityYield) }} kWh/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_summer') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.electricitySummer) }} kWh</span>
+          <span class="info-value">{{ fmt(agg.electricitySummer) }} kWh</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_winter') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.electricityWinter) }} kWh</span>
+          <span class="info-value">{{ fmt(agg.electricityWinter) }} kWh</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_financial') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
+          <span class="info-value">{{ fmt(agg.financialReturn) }} CHF/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE ↗</a>)</span>
@@ -106,27 +111,34 @@
         </div>
       </div>
 
+      <!-- Solar thermal -->
       <div class="info-section">
-        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.roofData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 8a4 4 0 0 0-1.645 7.647"/><path d="M2 12h2"/><path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><path d="m4.93 4.93 1.41 1.41"/><path d="m6.34 17.66-1.41 1.41"/></svg>{{ $t('info_thermal_title') }}</h4>
+        <h4>
+          <svg class="section-icon" :style="{ color: suitabilityColor(agg.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 8a4 4 0 0 0-1.645 7.647"/><path d="M2 12h2"/><path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><path d="m4.93 4.93 1.41 1.41"/><path d="m6.34 17.66-1.41 1.41"/></svg>{{ $t('info_thermal_title') }}
+        </h4>
         <div class="info-row">
           <span class="info-label">{{ $t('info_heat_yield') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.heatYield) }} kWh/{{ $t('info_year') }}</span>
+          <span class="info-value">{{ fmt(agg.heatYield) }} kWh/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_heating_demand') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.heatingDemand) }} kWh/{{ $t('info_year') }}</span>
+          <span class="info-value">{{ fmt(agg.heatingDemand) }} kWh/{{ $t('info_year') }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_hot_water_demand') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.hotWaterDemand) }} kWh/{{ $t('info_year') }}</span>
+          <span class="info-value">{{ fmt(agg.hotWaterDemand) }} kWh/{{ $t('info_year') }}</span>
+        </div>
+        <div v-if="store.summary && store.summary.heatCoveragePercent !== null" class="info-row">
+          <span class="info-label">{{ $t('info_heat_coverage') }}</span>
+          <span class="info-value">{{ store.summary.heatCoveragePercent }}%</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_collector_area') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.collectorArea) }} m²</span>
+          <span class="info-value">{{ fmt(agg.collectorArea) }} m²</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_storage') }}</span>
-          <span class="info-value">{{ fmt(store.roofData.storageVolume) }} L</span>
+          <span class="info-value">{{ fmt(agg.storageVolume) }} L</span>
         </div>
       </div>
     </div>
@@ -136,104 +148,7 @@
     </p>
     <p class="map-link">
       {{ $t('info_solar_calculator_text') }}
-      <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
-    </p>
-    <p class="map-link">
-      {{ $t('info_geoadmin_text') }}
-      <a :href="geoAdminUrl('roofs')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
-    </p>
-  </div>
-
-  <!-- Données façade -->
-  <div v-else-if="store.solarMode === 'facades' && store.facadeData" class="info-panel"
-       :style="{ borderColor: suitabilityColor(store.facadeData.suitabilityClass) }">
-    <h3 :style="{ borderBottomColor: suitabilityColor(store.facadeData.suitabilityClass) }">
-      {{ store.selectionMode === 'multi' ? $t('info_facade_multi_title') : store.selectionMode === 'single' ? $t('info_facade_single_title') : $t('info_facade_title') }}<span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
-    </h3>
-    <div class="info-grid">
-      <div class="info-section">
-        <h4>{{ $t('info_general') }}</h4>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_suitability') }}</span>
-          <span class="info-value">
-            <span :class="'badge badge-' + store.facadeData.suitabilityClass">
-              {{ suitabilityLabel(store.facadeData.suitabilityClass) }}
-            </span>
-          </span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_area') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.area) }} m²</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_irradiation') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.irradiationPerM2) }} kWh/m²/{{ $t('info_year') }}</span>
-        </div>
-      </div>
-
-      <div class="info-section">
-        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.facadeData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2h2"/><path d="m14.28 14-4.56 8"/><path d="m21 22-1.558-4H4.558"/><path d="M3 10v2"/><path d="M6.245 15.04A2 2 0 0 1 8 14h12a1 1 0 0 1 .864 1.505l-3.11 5.457A2 2 0 0 1 16 22H4a1 1 0 0 1-.863-1.506z"/><path d="M7 2a4 4 0 0 1-4 4"/><path d="m8.66 7.66 1.41 1.41"/></svg>{{ $t('info_pv_title') }}</h4>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_electricity_yield') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.electricityYield) }} kWh/{{ $t('info_year') }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_summer') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.electricitySummer) }} kWh</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_winter') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.electricityWinter) }} kWh</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_financial') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.financialReturn) }} CHF/{{ $t('info_year') }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_tarif') }} (<a href="https://www.vese.ch/pvtarif/" target="_blank" rel="noopener" class="inline-link">VESE ↗</a>)</span>
-          <span class="info-value">{{ tarifValue }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_provider') }}</span>
-          <span class="info-value">{{ tarifProviderName }}</span>
-        </div>
-      </div>
-
-      <div class="info-section">
-        <h4><svg class="section-icon" :style="{ color: suitabilityColor(store.facadeData.suitabilityClass) }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 8a4 4 0 0 0-1.645 7.647"/><path d="M2 12h2"/><path d="M20 14.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0z"/><path d="m4.93 4.93 1.41 1.41"/><path d="m6.34 17.66-1.41 1.41"/></svg>{{ $t('info_thermal_title') }}</h4>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_heat_yield') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.heatYield) }} kWh/{{ $t('info_year') }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_heating_demand') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.heatingDemand) }} kWh/{{ $t('info_year') }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_hot_water_demand') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.hotWaterDemand) }} kWh/{{ $t('info_year') }}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_collector_area') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.collectorArea) }} m²</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">{{ $t('info_storage') }}</span>
-          <span class="info-value">{{ fmt(store.facadeData.storageVolume) }} L</span>
-        </div>
-      </div>
-    </div>
-
-    <p class="faq-link">
-      {{ $t('info_faq_text') }} <a href="#faq">{{ $t('info_faq_link') }}</a>
-    </p>
-    <p class="map-link">
-      {{ $t('info_solar_calculator_text') }}
-      <a :href="$t('info_solar_calculator_url')" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
-    </p>
-    <p class="map-link">
-      {{ $t('info_geoadmin_text') }}
-      <a :href="geoAdminUrl('facades')" target="_blank" rel="noopener">map.geo.admin.ch ↗</a>
+      <a :href="solarCalculatorUrl" target="_blank" rel="noopener">{{ $t('info_solar_calculator_link') }} ↗</a>
     </p>
   </div>
 </template>
@@ -245,8 +160,10 @@ import { watch, computed } from 'vue'
 import { usePvTarif } from '@/composables/usePvTarif'
 
 const store = useMapStore()
-const { t, locale } = useI18n()
+const { t } = useI18n()
 const { tarifData, loading: tarifLoading, fetchTarif } = usePvTarif()
+
+const agg = computed(() => store.aggregated)
 
 /** Formatted tariff display: provider name and tariff value */
 const tarifProviderName = computed(() => {
@@ -262,28 +179,83 @@ const tarifValue = computed(() => {
 })
 
 // Fetch tariff when commune changes
-watch(() => store.communeId, (newId) => {
-  console.log('[VESE] communeId changed:', newId)
-  if (newId) {
-    fetchTarif(newId)
-  }
-}, { immediate: true })
+watch(
+  () => store.communeId,
+  (newId) => {
+    if (newId) fetchTarif(newId)
+  },
+  { immediate: true },
+)
 
-/** Construit l'URL map.geo.admin.ch centrée sur le bâtiment avec la couche solaire */
-function geoAdminUrl(mode: 'roofs' | 'facades'): string {
-  const coords = store.clickCoords
-  if (!coords) return 'https://map.geo.admin.ch'
-
-  const layer = mode === 'roofs'
-    ? 'ch.bfe.solarenergie-eignung-daecher'
-    : 'ch.bfe.solarenergie-eignung-fassaden'
-
-  return `https://map.geo.admin.ch/?lang=${locale.value}&bgLayer=ch.swisstopo.swissimage&layers=${layer}&E=${coords[0].toFixed(0)}&N=${coords[1].toFixed(0)}&zoom=13&sr=2056`
+/** Returns the distribution percentage for a given class (1..5). */
+function distributionValue(c: number): number {
+  const dist = agg.value?.suitabilityDistribution
+  if (!dist) return 0
+  return (dist as Record<string, number>)[`class${c}`] || 0
 }
 
-function fmt(value: number | undefined): string {
+/**
+ * Solar calculator (Solarrechner) link.
+ * For a single selected surface, builds a deep link with prefilled parameters
+ * (roof geometry, area, demand, postal code, LV03 coordinates, roof id).
+ * Otherwise falls back to the plain calculator URL.
+ */
+const solarCalculatorUrl = computed(() => {
+  const base = t('info_solar_calculator_url')
+  const surfaces = store.selectedSurfaces
+  const coords = store.clickCoords
+  // Deep link only makes sense for a single roof surface
+  if (surfaces.length !== 1 || store.solarMode !== 'roofs' || !coords) return base
+
+  const s = surfaces[0]
+  // LV95 → LV03: Est_LV03 = E − 2'000'000, Nord_LV03 = N − 1'000'000
+  const yLv03 = Math.round(coords[0] - 2_000_000) // Est (Y in the calculator)
+  const xLv03 = Math.round(coords[1] - 1_000_000) // Nord (X in the calculator)
+
+  const params = new URLSearchParams()
+  params.set('SYSTEM', '2')
+  params.set('TECHNOLOGIE', '2')
+  if (store.postalCode) params.set('POSTLEITZAHL', String(store.postalCode))
+  params.set('X', String(xLv03))
+  params.set('Y', String(yLv03))
+  if (s.tilt !== null) params.set('NEIGUNG', String(Math.round(s.tilt)))
+  if (s.orientation !== null) params.set('AUSRICHTUNG', String(Math.round(s.orientation)))
+  if (s.hotWaterDemand) params.set('BEDARF_WARMWASSER', String(Math.round(s.hotWaterDemand)))
+  params.set('DACH_ID', String(s.featureId))
+  if (s.area) params.set('FLAECHE', String(Math.round(s.area)))
+
+  return `${base}?${params.toString()}`
+})
+
+function fmt(value: number | undefined | null): string {
   if (value === undefined || value === null) return '-'
   return Math.round(value).toLocaleString('de-CH')
+}
+
+/** Formats a degree value, or '-' when unavailable. */
+function fmtDeg(value: number | null): string {
+  if (value === undefined || value === null) return '-'
+  return `${Math.round(value)}°`
+}
+
+/**
+ * Formats orientation with cardinal direction.
+ * Sonnendach convention: 0° = South, negative → East, positive → West, ±180° = North.
+ * e.g. -13° → "-13° (S)"
+ */
+function fmtOrientation(value: number | null): string {
+  if (value === undefined || value === null) return '-'
+  const deg = Math.round(value)
+  // Normalize to [-180, 180]
+  let a = ((deg + 180) % 360 + 360) % 360 - 180
+  const abs = Math.abs(a)
+  let cardinalKey: string
+  if (abs <= 22.5) cardinalKey = 'cardinal_s'
+  else if (abs >= 157.5) cardinalKey = 'cardinal_n'
+  else if (abs <= 67.5) cardinalKey = a < 0 ? 'cardinal_se' : 'cardinal_sw'
+  else if (abs < 112.5) cardinalKey = a < 0 ? 'cardinal_e' : 'cardinal_w'
+  else cardinalKey = a < 0 ? 'cardinal_ne' : 'cardinal_nw'
+  return `${deg}° (${t(cardinalKey)})`
 }
 
 function suitabilityLabel(classNum: number): string {
@@ -293,11 +265,11 @@ function suitabilityLabel(classNum: number): string {
 /** Returns the color matching the suitability class (same as map tiles) */
 function suitabilityColor(classNum: number): string {
   const colors: Record<number, string> = {
-    1: '#4fc3f7',  // gering - light blue
-    2: '#fdd835',  // mittel - yellow
-    3: '#ff8f00',  // gut - orange
-    4: '#e65100',  // sehr gut - dark orange
-    5: '#b71c1c',  // hervorragend - dark red
+    1: '#4fc3f7',
+    2: '#fdd835',
+    3: '#ff8f00',
+    4: '#e65100',
+    5: '#b71c1c',
   }
   return colors[classNum] || '#999'
 }
@@ -500,5 +472,11 @@ function suitabilityColor(classNum: number): string {
   font-weight: 400;
   font-size: 0.95rem;
   color: #555;
+}
+
+.title-count {
+  font-weight: 400;
+  font-size: 0.9rem;
+  color: #777;
 }
 </style>

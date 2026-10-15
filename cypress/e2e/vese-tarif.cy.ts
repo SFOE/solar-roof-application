@@ -5,6 +5,8 @@
  * - VESE pvtarif API called with correct commune ID after building identification (Req 7.1)
  * - Successful VESE response displays provider name and tariff in cts/kWh (Req 7.2)
  * - VESE API error shows '-' for tariff and provider without blocking other data (Req 7.3)
+ * - Security: the VESE license key never leaves the browser and the frontend
+ *   only talks to the proxy/Lambda, never to VESE directly (Req 7.4)
  */
 
 describe('VESE Tariff Integration', () => {
@@ -83,5 +85,41 @@ describe('VESE Tariff Integration', () => {
 
     // Verify provider row shows '-' as well
     cy.get('.info-panel').contains('Stromversorger').closest('.info-row').find('.info-value').should('contain.text', '-')
+  })
+
+  it('never sends the VESE license key from the browser and never calls VESE directly', () => {
+    // Capture EVERY outgoing HTTP request the browser makes, so we can assert on
+    // the tariff calls specifically. This is the security regression guard for
+    // the leaked-key bug: reintroducing VITE_VESE_API_KEY in the frontend (which
+    // would append a licenseKey to the browser request, or call VESE directly)
+    // makes this test fail.
+    const outgoingUrls: string[] = []
+    cy.intercept('GET', '**', (req) => {
+      outgoingUrls.push(req.url)
+    })
+
+    cy.interceptVese()
+    cy.visit('/')
+
+    cy.searchAndSelect('Bahnhof')
+    cy.wait('@identifyRequest')
+    cy.wait('@findRequest')
+    cy.wait('@findRequest')
+    cy.wait('@veseMuniRequest')
+    cy.wait('@veseEvuRequest')
+
+    cy.then(() => {
+      const tarifCalls = outgoingUrls.filter((u) => /\/(muni|evu)\?/.test(u))
+
+      // The tariff calls must actually have happened...
+      expect(tarifCalls, 'tariff requests were made').to.have.length.greaterThan(0)
+
+      tarifCalls.forEach((url) => {
+        // ...and none of them may carry the license key from the browser.
+        expect(url, 'no licenseKey in browser request').not.to.match(/licensekey/i)
+        // ...nor hit the VESE API host directly (must go through the proxy/Lambda).
+        expect(url, 'no direct VESE host call').not.to.include('opendata.vese.ch')
+      })
+    })
   })
 })
