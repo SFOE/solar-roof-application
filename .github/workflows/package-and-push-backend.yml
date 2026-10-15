@@ -47,7 +47,7 @@ jobs:
         run: zip -j solar-roof-vese-proxy.zip backend/lambda_function.py
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: solar-roof-vese-proxy
           path: solar-roof-vese-proxy.zip
