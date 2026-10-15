@@ -145,10 +145,10 @@ npm run build-only && npm run test:e2e
 
 ## CI/CD
 
-- **Lint, Test & Build** (`lint-test-build.yml`): runs on every push and pull request: lint, type-check, build, and E2E tests. Surfaces problems and fixes early, upstream of deployment.
-- **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): on release / manual dispatch. Builds the site, archives a versioned artifact to S3, then deploys it (S3 sync + CloudFront invalidation). No tests here (they run in `lint-test-build.yml`).
-- **Package and Push Backend** (`package-and-push-backend.yml`): on release / manual dispatch. Packages the VESE proxy Lambda (zip) and pushes the versioned zip (`solar-roof-vese-proxy-<tag>.zip`) to the backend artefact store. It does not deploy: the infrastructure repo deploys a chosen version via `source_code_version` in `deploy.auto.tfvars.json` (damquake-style).
-- **Dependabot**: monthly dependency updates with auto-merge for patch/minor versions
+- **Lint, Test & Build** (`lint-test-build.yml`): lint, type-check, build and E2E tests. It runs by itself on every pull request, and it is called by the frontend pipeline on every push to `main`. It never deploys anything.
+- **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): **automatic** on every push to `main` (this includes merged Dependabot updates). It runs Lint, Test & Build first. Only if everything passes, it builds the site, archives a versioned artifact (`sha-<commit>`) to S3, then deploys to **dev** (S3 sync + CloudFront invalidation). A manual run lets you choose `dev` or `prod` and an optional version; prod is never deployed automatically.
+- **Package and Push Backend** (`package-and-push-backend.yml`): **manual only**. Run it from `main` with a new version tag (for example `v1.2.0`). `latest` and tags with unusual characters are refused; the workflow does not check whether the tag was already used, so pick one that was not. It packages the VESE proxy Lambda (zip) and pushes `solar-roof-vese-proxy-<tag>.zip` to the backend artefact store. It does not deploy: afterwards, set `source_code_version` to the same tag in `deploy.auto.tfvars.json` of the infrastructure repo and push (damquake-style).
+- **Dependabot**: monthly dependency updates with auto-merge for patch/minor versions. Once merged, the frontend is redeployed to dev. TypeScript major updates are ignored until `typescript-eslint` supports TypeScript 7.
 
 ### GitHub secrets required
 
@@ -159,7 +159,7 @@ npm run build-only && npm run test:e2e
 | `CLOUDFRONT_DISTRIBUTION_ID_DEV` | CloudFront distribution ID (dev) for cache invalidation |
 | `CLOUDFRONT_DISTRIBUTION_ID_PROD` | CloudFront distribution ID (prod) for cache invalidation |
 
-The `package-and-deploy-frontend.yml` and `package-and-push-backend.yml` workflows take an `environment` input (`dev`/`prod`) and select the matching role/bucket/distribution automatically.
+When run manually, the `package-and-deploy-frontend.yml` and `package-and-push-backend.yml` workflows take an `environment` input (`dev`/`prod`) and select the matching role/bucket/distribution automatically. The automatic frontend deployment on `main` always targets `dev`.
 
 > **Note:** The VESE API key (stored in AWS Secrets Manager) is **not** a GitHub secret and is **not** used by the application. The infrastructure repo references the secret by name. The frontend only ever uses the public API Gateway URL (`VITE_PVTARIF_API_URL`).
 

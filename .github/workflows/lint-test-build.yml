@@ -1,20 +1,24 @@
 name: Lint, Test & Build
 
-# Lint, type-check, build and run E2E tests on every push and pull request so
-# problems and fixes surface early, upstream of the frontend pipeline
-# (package-and-deploy-frontend.yml) and the backend push (package-and-push-backend.yml).
+# Lint, type-check, build and run E2E tests.
+#
+# - On every pull request: runs on its own, so problems surface before merging.
+# - On a push to main: not triggered here. package-and-deploy-frontend.yml calls this
+#   workflow first (workflow_call) and deploys the frontend only if it passes, so the
+#   checks run once per push and gate the deployment of the same commit.
+# The backend (package-and-push-backend.yml) is manual and not covered by these checks.
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read
 
 jobs:
   checks:
+    # This name is the status check to mark as "required" in the branch rules of main.
+    name: Lint, Test & Build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
