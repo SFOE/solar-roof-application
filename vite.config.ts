@@ -48,9 +48,9 @@ function veseProxyPlugin(): Plugin {
           res.setHeader('Access-Control-Allow-Origin', '*')
           res.statusCode = response.status
           res.end(data)
-        } catch (e: any) {
+        } catch (e) {
           res.statusCode = 502
-          res.end(JSON.stringify({ error: `VESE API unreachable: ${e.message}` }))
+          res.end(JSON.stringify({ error: `VESE API unreachable: ${e instanceof Error ? e.message : String(e)}` }))
         }
       })
     },

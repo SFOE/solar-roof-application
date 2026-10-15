@@ -7,11 +7,6 @@
  * - ch.bfe.solarenergie-eignung-fassaden (façades)
  */
 
-export interface Coordinates {
-  east: number
-  north: number
-}
-
 /** Mode d'affichage : toitures ou façades */
 export type SolarMode = 'roofs' | 'facades'
 
@@ -100,15 +95,3 @@ export interface SummaryData {
   financialReturn: number             // CHF/an (potentiel PV)
   heatCoveragePercent: number | null  // % couverture besoins chaleur (null si indisponible)
 }
-
-/**
- * @deprecated Utiliser `SurfaceData` (surface) ou `AggregatedData` (sélection agrégée).
- * Conservé comme alias le temps de la migration.
- */
-export type RoofData = SurfaceData
-
-/**
- * @deprecated Utiliser `SurfaceData` (surface) ou `AggregatedData` (sélection agrégée).
- * Conservé comme alias le temps de la migration.
- */
-export type FacadeData = SurfaceData

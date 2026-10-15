@@ -18,7 +18,7 @@
       @click="clearAll"
     >{{ $t('mode_new_selection') }}</button>
     <!-- Attribution bar -->
-    <div class="map-attribution">© Données: OFEN, swisstopo</div>
+    <div class="map-attribution">{{ $t('map_attribution') }}</div>
     <!-- Basemap switcher: shows the alternative option -->
     <div class="basemap-switcher">
       <template v-for="bm in basemaps" :key="bm.id">
@@ -26,10 +26,10 @@
           v-if="bm.id !== activeBasemap"
           class="basemap-thumb"
           @click="switchBasemap(bm.id)"
-          :title="bm.label"
+          :title="$t(bm.labelKey)"
         >
-          <img :src="bm.thumbnail" :alt="bm.label" />
-          <span class="basemap-label">{{ bm.label }}</span>
+          <img :src="bm.thumbnail" :alt="$t(bm.labelKey)" />
+          <span class="basemap-label">{{ $t(bm.labelKey) }}</span>
         </button>
       </template>
     </div>
@@ -98,8 +98,8 @@ function createSwissWmtsSource(layerName: string, format: string): WMTS {
 
 // Basemap configuration
 const basemaps = [
-  { id: 'satellite', label: 'Satellite', layer: 'ch.swisstopo.swissimage', format: 'jpeg', thumbnail: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/2056/17/6/4.jpeg' },
-  { id: 'grey', label: 'Carte N\u0026B', layer: 'ch.swisstopo.pixelkarte-grau', format: 'jpeg', thumbnail: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/2056/17/6/4.jpeg' },
+  { id: 'satellite', labelKey: 'basemap_satellite', layer: 'ch.swisstopo.swissimage', format: 'jpeg', thumbnail: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.swissimage/default/current/2056/17/6/4.jpeg' },
+  { id: 'grey', labelKey: 'basemap_grey', layer: 'ch.swisstopo.pixelkarte-grau', format: 'jpeg', thumbnail: 'https://wmts.geo.admin.ch/1.0.0/ch.swisstopo.pixelkarte-grau/default/current/2056/17/6/4.jpeg' },
 ]
 const activeBasemap = ref('satellite')
 let basemapLayer: TileLayer | null = null
@@ -207,8 +207,6 @@ async function identifyAt(coords: [number, number], preferBestRoof = false) {
       if (store.selectedSurfaces.length === 0) store.noData = true
       return
     }
-    store.lastBuildingId = picked.surface.buildingId
-
     if (store.selectionMode === 'single') {
       // Explore mode: replace the selection with the clicked surface
       outlineSource.clear()
@@ -234,7 +232,7 @@ async function identifyAt(coords: [number, number], preferBestRoof = false) {
 }
 
 /** Called on map click */
-async function onMapClick(evt: MapBrowserEvent<UIEvent>) {
+async function onMapClick(evt: MapBrowserEvent) {
   store.selectedAddress = ''
   await identifyAt(evt.coordinate as [number, number])
 }
@@ -373,10 +371,6 @@ onMounted(() => {
   position: relative;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   transition: border-color 0.2s;
-}
-
-.basemap-thumb.active {
-  border-color: #d32f2f;
 }
 
 .basemap-thumb img {

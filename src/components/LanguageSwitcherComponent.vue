@@ -1,6 +1,6 @@
 <template>
   <div class="language-switcher">
-    <select v-model="languageStore.currentLocale" aria-label="Language">
+    <select v-model="languageStore.currentLocale" :aria-label="$t('language_label')">
       <option v-for="(label, locale) in locales" :key="locale" :value="locale">
         {{ label }}
       </option>

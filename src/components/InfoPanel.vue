@@ -158,6 +158,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useI18n } from 'vue-i18n'
 import { watch, computed } from 'vue'
 import { usePvTarif } from '@/composables/usePvTarif'
+import type { SuitabilityDistribution } from '@/types/solar'
 
 const store = useMapStore()
 const { t } = useI18n()
@@ -191,7 +192,7 @@ watch(
 function distributionValue(c: number): number {
   const dist = agg.value?.suitabilityDistribution
   if (!dist) return 0
-  return (dist as Record<string, number>)[`class${c}`] || 0
+  return dist[`class${c}` as keyof SuitabilityDistribution] || 0
 }
 
 /**
@@ -247,7 +248,7 @@ function fmtOrientation(value: number | null): string {
   if (value === undefined || value === null) return '-'
   const deg = Math.round(value)
   // Normalize to [-180, 180]
-  let a = ((deg + 180) % 360 + 360) % 360 - 180
+  const a = ((deg + 180) % 360 + 360) % 360 - 180
   const abs = Math.abs(a)
   let cardinalKey: string
   if (abs <= 22.5) cardinalKey = 'cardinal_s'

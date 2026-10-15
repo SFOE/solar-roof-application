@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { watch } from 'vue'
 import { useLanguageStore } from '@/stores/languageStore'
 import { useMapStore } from '@/stores/mapStore'
 
@@ -19,7 +18,6 @@ const route = useRoute()
 const languageStore = useLanguageStore()
 const store = useMapStore()
 const mapRef = ref<InstanceType<typeof MapComponent>>()
-const infoPanelSection = ref<HTMLDivElement>()
 const mapSection = ref<HTMLDivElement>()
 
 if (typeof route.query.lang === 'string') {
@@ -74,7 +72,7 @@ watch(
     </div>
     <SelectionModeToggle />
     <SummaryBanner />
-    <div ref="infoPanelSection" style="padding-bottom: 1rem;">
+    <div style="padding-bottom: 1rem;">
       <InfoPanel />
     </div>
 

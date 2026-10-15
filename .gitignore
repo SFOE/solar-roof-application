@@ -26,13 +26,14 @@ coverage
 
 *.tsbuildinfo
 
+# Python (backend Lambda)
+__pycache__/
+
 .eslintcache
 
 # Cypress
 /cypress/videos/
 /cypress/screenshots/
-
-validate-ci.mjs
 
 # Vitest
 __screenshots__/

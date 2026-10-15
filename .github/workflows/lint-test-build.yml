@@ -1,0 +1,51 @@
+name: Lint, Test & Build
+
+# Lint, type-check, build and run E2E tests on every push and pull request so
+# problems and fixes surface early, upstream of the frontend pipeline
+# (package-and-deploy-frontend.yml) and the backend push (package-and-push-backend.yml).
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Check only (no --fix): CI must report problems, not silently rewrite files.
+      - name: Lint
+        run: npm run lint-check
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Build
+        run: npm run build-only
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+      - name: Upload Cypress artifacts on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/screenshots/
+            cypress/videos/
+          retention-days: 3

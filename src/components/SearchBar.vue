@@ -37,7 +37,7 @@
         v-if="query"
         class="search-clear"
         @mousedown.prevent="clearSearch"
-        aria-label="Clear search"
+        :aria-label="$t('search_clear')"
       >✕</button>
     </div>
 

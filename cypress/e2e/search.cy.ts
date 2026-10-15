@@ -18,9 +18,8 @@ describe('Address Search', () => {
 
   it('typing ≥2 characters calls SearchServer API with correct params', () => {
     // Type 2+ characters in the search input to trigger the API call
-    cy.get('input.search-input')
-      .clear()
-      .type('Ba')
+    cy.get('input.search-input').clear()
+    cy.get('input.search-input').type('Ba')
 
     // Wait for the debounced search request and verify URL params
     cy.wait('@searchRequest').its('request.url').should((url) => {
@@ -33,9 +32,8 @@ describe('Address Search', () => {
   })
 
   it('successful API response displays suggestion list with address labels from fixture', () => {
-    cy.get('input.search-input')
-      .clear()
-      .type('Bahnhof')
+    cy.get('input.search-input').clear()
+    cy.get('input.search-input').type('Bahnhof')
 
     cy.wait('@searchRequest')
 
@@ -50,9 +48,8 @@ describe('Address Search', () => {
   })
 
   it('selecting an address triggers map centering and building identification', () => {
-    cy.get('input.search-input')
-      .clear()
-      .type('Bahnhof')
+    cy.get('input.search-input').clear()
+    cy.get('input.search-input').type('Bahnhof')
 
     cy.wait('@searchRequest')
 
@@ -64,9 +61,8 @@ describe('Address Search', () => {
   })
 
   it('selecting an address shows InfoPanel with solar data from identify fixture', () => {
-    cy.get('input.search-input')
-      .clear()
-      .type('Bahnhof')
+    cy.get('input.search-input').clear()
+    cy.get('input.search-input').type('Bahnhof')
 
     cy.wait('@searchRequest')
 
@@ -93,9 +89,8 @@ describe('Address Search', () => {
       body: { error: 'Internal Server Error' },
     }).as('searchError')
 
-    cy.get('input.search-input')
-      .clear()
-      .type('Bahnhof')
+    cy.get('input.search-input').clear()
+    cy.get('input.search-input').type('Bahnhof')
 
     cy.wait('@searchError')
 
