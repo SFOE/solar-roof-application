@@ -40,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Single-file Lambda: boto3 is provided by the Lambda runtime, nothing to install.
       - name: Package Lambda code
