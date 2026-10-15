@@ -48,10 +48,7 @@ export function setupVeseIntercept(
 ): void {
   const { error = false, muniFixture = 'vese-muni.json', evuFixture = 'vese-evu.json' } = options
 
-  // Match both dev (/api/pvtarif/muni) and prod (Lambda URL /muni) patterns
-  const muniPattern = /\/(muni)\?/
-  const evuPattern = /\/(evu)\?/
-
+  // Match both dev (/api/pvtarif/muni) and prod (Lambda URL /muni) patterns.
   if (error) {
     cy.intercept('GET', /\/muni\?/, { statusCode: 503, body: {} }).as('veseMuniRequest')
     cy.intercept('GET', /\/evu\?/, { statusCode: 503, body: {} }).as('veseEvuRequest')

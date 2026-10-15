@@ -1,7 +1,9 @@
 <!--
   SelectionModeToggle.vue
 
-  Toggle for selection granularity: Individual / Building / Multiple.
+  Toggle for click behavior:
+  - Single: each click replaces the selection (explore the map)
+  - Multi: each click adds/removes a roof surface (cumulative, quarter-wide estimate)
   Displayed below the map. Features a sliding indicator behind the active button.
 -->
 
@@ -15,12 +17,6 @@
         @click="store.setSelectionMode('single')"
       >
         {{ $t('mode_single') }}
-      </button>
-      <button
-        :class="{ active: store.selectionMode === 'building' }"
-        @click="store.setSelectionMode('building')"
-      >
-        {{ $t('mode_building') }}
       </button>
       <button
         :class="{ active: store.selectionMode === 'multi' }"
@@ -38,14 +34,7 @@ import { useMapStore } from '@/stores/mapStore'
 
 const store = useMapStore()
 
-const sliderOffset = computed(() => {
-  switch (store.selectionMode) {
-    case 'single': return '0%'
-    case 'building': return '100%'
-    case 'multi': return '200%'
-    default: return '100%'
-  }
-})
+const sliderOffset = computed(() => (store.selectionMode === 'single' ? '0%' : '100%'))
 </script>
 
 <style scoped>
@@ -65,11 +54,12 @@ const sliderOffset = computed(() => {
 .selection-toggle {
   position: relative;
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 1fr 1fr;
   border: 2px solid #ccc;
   border-radius: 6px;
   overflow: hidden;
   background: #fff;
+  min-width: 220px;
 }
 
 .slider {
@@ -77,7 +67,7 @@ const sliderOffset = computed(() => {
   top: 2px;
   bottom: 2px;
   left: 2px;
-  width: calc((100% - 4px) / 3);
+  width: calc((100% - 4px) / 2);
   background: #d32f2f;
   border-radius: 4px;
   transition: transform 0.3s ease;

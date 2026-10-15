@@ -15,8 +15,13 @@ export interface Coordinates {
 /** Mode d'affichage : toitures ou façades */
 export type SolarMode = 'roofs' | 'facades'
 
-/** Granularité de sélection : bâtiment entier, surface individuelle, ou multi-sélection */
-export type SelectionMode = 'building' | 'single' | 'multi'
+/**
+ * Comportement du clic de sélection :
+ * - 'single' : chaque clic remplace la sélection (exploration)
+ * - 'multi' : chaque clic ajoute/retire une surface (cumul pour un quartier)
+ * Dans les deux cas, la sélection reste à l'échelle d'une surface de toit.
+ */
+export type SelectionMode = 'single' | 'multi'
 
 /** Suitability distribution: percentage of area per class */
 export interface SuitabilityDistribution {
@@ -27,50 +32,83 @@ export interface SuitabilityDistribution {
   class5: number  // % hervorragend
 }
 
-/** Données solaires d'une surface de toit */
-export interface RoofData {
-  featureId: number
-  buildingId: number
-  surfaceCount: number
-  area: number
-  suitabilityClass: number
-  suitabilityDistribution: SuitabilityDistribution
-  // PV (électricité) — sommes
+/**
+ * Surface individuelle normalisée — unité de base de la sélection.
+ * Chaque surface a un featureId unique (clé de déduplication).
+ * Correspond à un pan de toit ou une façade retourné par l'API swisstopo.
+ */
+export interface SurfaceData {
+  featureId: number         // identifiant unique de la surface (clé de dédup)
+  buildingId: number        // identifiant du bâtiment parent (regroupement besoins chaleur)
+  area: number              // m²
+  suitabilityClass: number  // 1..5
+  // PV (électricité)
   electricityYield: number  // kWh/an
   electricityWinter: number // kWh (semestre hiver)
   electricitySummer: number // kWh (semestre été)
   financialReturn: number   // CHF/an
-  // Thermique (chaleur) — sommes
+  // Thermique (chaleur)
   heatYield: number         // kWh/an
-  heatingDemand: number     // kWh/an (valeur bâtiment)
-  hotWaterDemand: number    // kWh/an (valeur bâtiment)
-  collectorArea: number     // m² (somme)
-  storageVolume: number     // litres (somme)
+  heatingDemand: number     // kWh/an — valeur BÂTIMENT (identique sur toutes les surfaces du bâtiment)
+  hotWaterDemand: number    // kWh/an — valeur BÂTIMENT
+  collectorArea: number     // m²
+  storageVolume: number     // litres
   // Irradiation
-  irradiation: number       // kWh/an total (somme)
-  irradiationPerM2: number  // kWh/m²/an (moyenne pondérée)
+  irradiation: number       // kWh/an total surface (gstrahlung)
+  irradiationPerM2: number  // kWh/m²/an (mstrahlung)
+  // Géométrie de surface (mode Toiture, surface unique)
+  orientation: number | null // ausrichtung, en degrés
+  tilt: number | null        // neigung, en degrés
   // Identifiant GWR
   gwr_egid: number
 }
 
-/** Données solaires d'une façade */
-export interface FacadeData {
-  featureId: number
-  buildingId: number
+/**
+ * Données agrégées de la sélection courante — consommées par l'InfoPanel.
+ * Regroupe toutes les surfaces sélectionnées (bâtiments + surfaces confondus).
+ */
+export interface AggregatedData {
   surfaceCount: number
+  buildingCount: number
   area: number
   suitabilityClass: number
   suitabilityDistribution: SuitabilityDistribution
+  // PV — sommes
   electricityYield: number
   electricityWinter: number
   electricitySummer: number
   financialReturn: number
+  // Thermique — sommes (besoins dédupliqués par bâtiment)
   heatYield: number
-  heatingDemand: number
-  hotWaterDemand: number
+  heatingDemand: number     // Σ besoins uniques par bâtiment
+  hotWaterDemand: number    // Σ besoins uniques par bâtiment
   collectorArea: number
   storageVolume: number
+  // Irradiation
   irradiation: number
-  irradiationPerM2: number
+  irradiationPerM2: number  // moyenne pondérée par surface
   gwr_egid: number
+  // Champs surface unique (null si agrégat multi)
+  isSingleSurface: boolean
+  orientation: number | null
+  tilt: number | null
 }
+
+/** Données de la bannière de synthèse (aptitude + potentiel économique). */
+export interface SummaryData {
+  suitabilityClass: number
+  financialReturn: number             // CHF/an (potentiel PV)
+  heatCoveragePercent: number | null  // % couverture besoins chaleur (null si indisponible)
+}
+
+/**
+ * @deprecated Utiliser `SurfaceData` (surface) ou `AggregatedData` (sélection agrégée).
+ * Conservé comme alias le temps de la migration.
+ */
+export type RoofData = SurfaceData
+
+/**
+ * @deprecated Utiliser `SurfaceData` (surface) ou `AggregatedData` (sélection agrégée).
+ * Conservé comme alias le temps de la migration.
+ */
+export type FacadeData = SurfaceData

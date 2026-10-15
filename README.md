@@ -43,6 +43,8 @@ A lightweight AWS Lambda function (`solar-roof-dev-vese-proxy`) acts as a proxy 
 
 > **Note:** Access to the VESE PvTarif API requires a license agreement with VESE. See [PvTarif data documentation](https://www.vese.ch/wp-content/uploads/data-store/pvtarif/app/appPvMapExpert/pvtarif-map-expert-data-de.html) for details and contact VESE to obtain a license key.
 
+> **Security — the license key must never reach the browser.** The VESE key is injected only server-side: by the Vite dev proxy in development, and by the Lambda in production. **Do not read `VITE_VESE_API_KEY` (or any secret) from frontend code** — any `VITE_*` variable referenced in `src/` is inlined into the public JavaScript bundle and becomes readable by anyone inspecting the page. Frontend code only ever calls the proxy/Lambda (`/api/pvtarif/*` in dev, the Lambda URL in prod). A Cypress regression test (`cypress/e2e/vese-tarif.cy.ts`) asserts that browser tariff requests never carry a `licenseKey` and never hit the VESE host directly.
+
 ## License & Privacy
 
 This repository is under the [MIT License](LICENSE).

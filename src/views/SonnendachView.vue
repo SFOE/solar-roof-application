@@ -11,6 +11,7 @@ import MapComponent from '@/components/MapComponent.vue'
 import SearchBar from '@/components/SearchBar.vue'
 import ModeToggle from '@/components/ModeToggle.vue'
 import SelectionModeToggle from '@/components/SelectionModeToggle.vue'
+import SummaryBanner from '@/components/SummaryBanner.vue'
 import InfoPanel from '@/components/InfoPanel.vue'
 import FaqSection from '@/components/FaqSection.vue'
 
@@ -43,16 +44,18 @@ async function onAddressSelect(coords: { east: number; north: number; label: str
   }, 1100)
 }
 
-// Scroller vers l'infobox quand les données sont chargées (recherche ou clic manuel)
-// Le haut de l'InfoPanel est positionné au milieu vertical de l'écran
+// Scroller vers la carte quand les données sont chargées (recherche ou clic manuel)
+// On cadre sur la carte + le mini-encadré de synthèse (SummaryBanner) juste en dessous,
+// plutôt que sur l'InfoPanel détaillé.
 watch(
   () => store.loading,
   (loading, wasLoading) => {
     if (wasLoading && !loading) {
       setTimeout(() => {
-        if (!infoPanelSection.value) return
-        const panelTop = infoPanelSection.value.getBoundingClientRect().top + window.scrollY
-        const offset = panelTop - window.innerHeight / 2
+        if (!mapSection.value) return
+        const mapTop = mapSection.value.getBoundingClientRect().top + window.scrollY
+        // Marge au-dessus pour laisser visible le bouton Toiture/Façade
+        const offset = mapTop - 30
         window.scrollTo({ top: offset, behavior: 'smooth' })
       }, 100)
     }
@@ -65,16 +68,17 @@ watch(
   <div class="app-container">
     <h2 class="page-title">{{ $t('main_title') }}</h2>
     <SearchBar @select="onAddressSelect" />
-    <ModeToggle />
     <div ref="mapSection">
+      <ModeToggle />
       <MapComponent ref="mapRef" />
     </div>
     <SelectionModeToggle />
+    <SummaryBanner />
     <div ref="infoPanelSection" style="padding-bottom: 1rem;">
       <InfoPanel />
     </div>
 
-    <p class="app-description">{{ $t('app_description') }}</p>
+    <p class="app-description" v-html="$t('app_description')"></p>
 
     <FaqSection />
   </div>
@@ -97,5 +101,15 @@ watch(
   margin: 1rem auto;
   padding: 0.75rem 0;
   max-width: 1000px;
+}
+
+.app-description :deep(a) {
+  color: #1565c0;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.app-description :deep(a:hover) {
+  text-decoration: underline;
 }
 </style>
