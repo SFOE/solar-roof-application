@@ -12,7 +12,8 @@ name: Package and Push Backend (VESE proxy Lambda)
 #
 # The tag is required and must be new: re-pushing an existing tag does not change the S3 key,
 # so the infrastructure would see nothing to update. 'latest' is refused for that reason.
-# The Lambda code is not covered by lint-test-build.yml. Run this workflow from main.
+# The Lambda code is not covered by lint-test-build.yml (frontend): check-backend.yml (syntax and
+# lint) runs first, and the Lambda is only packaged if it passes. Run this workflow from main.
 #
 # AWS role: the GitHub secret SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV (ARN of the pipeline role),
 # the same one as the frontend workflow: the infrastructure creates a single pipeline role.
@@ -30,7 +31,11 @@ permissions:
   contents: read
 
 jobs:
+  checks:
+    uses: ./.github/workflows/check-backend.yml
+
   build:
+    needs: checks
     runs-on: ubuntu-latest
     steps:
       - name: Check the version tag

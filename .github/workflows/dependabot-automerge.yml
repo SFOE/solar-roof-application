@@ -1,5 +1,17 @@
 name: Dependabot auto-merge
 
+# Merges EVERY Dependabot pull request (patch, minor and major) once its checks are green.
+#
+# Why this is acceptable: `main` is the dev line. A merge to main deploys to dev only; prod is
+# never deployed automatically (manual run of package-and-deploy-frontend.yml). Before the first
+# prod deployment, restrict this workflow again to patch and minor updates (see
+# dependabot/fetch-metadata, output `update-type`).
+#
+# `--auto` does not merge at once: GitHub merges when the REQUIRED checks pass. Mark
+# "Lint, Test & Build" as required in the branch rules of main, otherwise nothing is checked.
+# A failing update (for example a major version) stays open and must be handled by hand.
+# Dependabot groups all npm updates in one pull request, so one failing update blocks the others.
+
 on: pull_request
 
 permissions:
@@ -11,14 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
-      - name: Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@v3
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Auto-merge patch and minor updates
-        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+      - name: Auto-merge when the checks pass
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
