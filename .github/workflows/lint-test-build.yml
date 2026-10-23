@@ -6,7 +6,8 @@ name: Lint, Test & Build
 # - On a push to main: not triggered here. package-and-deploy-frontend.yml calls this
 #   workflow first (workflow_call) and deploys the frontend only if it passes, so the
 #   checks run once per push and gate the deployment of the same commit.
-# The backend (package-and-push-backend.yml) is manual and not covered by these checks.
+# The backend is covered by a light check (syntax and lint of the Lambda), the job `backend` below.
+# The backend release itself (package-and-push-backend.yml) stays manual.
 
 on:
   pull_request:
@@ -16,8 +17,31 @@ permissions:
   contents: read
 
 jobs:
+  # Backend (Lambda): syntax check and lint, a few seconds. Always runs (no path filter), so that
+  # its check can be required. The same steps are in package-and-push-backend.yml (job `checks`):
+  # keep the two in step, including the pinned ruff version.
+  backend:
+    name: Check backend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12" # same as the Lambda runtime
+
+      - name: Syntax check
+        run: python -m py_compile backend/lambda_function.py
+
+      # Pinned on purpose: a new ruff release must not break the check by itself.
+      - name: Lint (ruff)
+        run: |
+          python -m pip install --quiet "ruff==0.15.17"
+          python -m ruff check backend
+
   checks:
-    # This name is the status check to mark as "required" in the branch rules of main.
+    # The names of this job and of the job above ("Check backend") are the status checks to mark as
+    # "required" in the branch rules of main.
     name: Lint, Test & Build
     runs-on: ubuntu-latest
     steps:

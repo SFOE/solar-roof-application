@@ -8,7 +8,8 @@ name: Dependabot auto-merge
 # dependabot/fetch-metadata, output `update-type`).
 #
 # `--auto` does not merge at once: GitHub merges when the REQUIRED checks pass. Mark
-# "Lint, Test & Build" as required in the branch rules of main, otherwise nothing is checked.
+# "Lint, Test & Build" and "Check backend" as required in the branch rules of main,
+# otherwise nothing is checked.
 # A failing update (for example a major version) stays open and must be handled by hand.
 # Dependabot groups all npm updates in one pull request, so one failing update blocks the others.
 
