@@ -72,7 +72,7 @@ Create a `.env.local` file for development:
 VITE_VESE_API_KEY=<your-vese-license-key>
 ```
 
-In production, the Lambda proxy URL is configured in `.env.production`:
+The Lambda proxy URL of each environment is configured in a committed file (it is public): `.env.production` for dev (the default build) and `.env.prod` for prod (built with `--mode prod`):
 
 ```
 VITE_PVTARIF_API_URL=https://<api-gateway-id>.execute-api.eu-central-1.amazonaws.com
@@ -145,21 +145,24 @@ npm run build-only && npm run test:e2e
 
 ## CI/CD
 
-- **Lint, Test & Build** (`lint-test-build.yml`): lint, type-check, build and E2E tests of the frontend. It runs by itself on every pull request, and it is called by the frontend pipeline on every push to `main`. It never deploys anything. It does not check the backend. In the branch rules of `main`, mark "Lint, Test & Build" as a required check.
-- **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): **automatic** on every push to `main` (this includes merged Dependabot updates). It runs Lint, Test & Build first. Only if everything passes, it builds the site, then deploys to **dev** (S3 sync + CloudFront invalidation). No frontend archive is kept in S3: a past version is rebuilt from its git commit. A manual run lets you choose `dev` or `prod`; prod is never deployed automatically.
-- **Package and Push Backend** (`package-and-push-backend.yml`): **manual only, dev only**. Run it from `main` with a new version tag (for example `v1.2.0`). `latest` and tags with unusual characters are refused; the workflow does not check whether the tag was already used, so pick one that was not. It first runs a syntax check and a lint (ruff, pinned) of the Lambda code, a few seconds (job `checks`); nothing is packaged if it fails. It has no tests yet. It packages the VESE proxy Lambda (zip) and pushes `solar-roof-vese-proxy-<tag>.zip` to the backend artefact store. It does not deploy: afterwards, set `source_code_version` to the same tag in `deploy.auto.tfvars.json` of the infrastructure repo and push (damquake-style).
-- **Dependabot** (`dependabot.yml`, `dependabot-automerge.yml`): once a month, one grouped pull request updates the npm libraries of the frontend and the GitHub Actions used by the workflows. There is no update for the backend (a single Python file without dependencies to install). **Every** Dependabot pull request, major versions included, is merged automatically once its checks pass: `main` only deploys to dev, and prod is deployed by hand. Before the first prod deployment, restrict the auto-merge to patch/minor again. For this to protect anything, "Lint, Test & Build" must be a required check in the branch rules of `main`. A failing update stays open and blocks the others of its group until it is handled by hand. Once merged, the frontend is redeployed to dev. TypeScript major updates are ignored until `typescript-eslint` supports TypeScript 7.
+- **Lint, Test & Build** (`lint-test-build.yml`): lint, type-check, build and E2E tests of the frontend. It runs by itself on every pull request, and it is called by the frontend pipeline on every push to `main`. It never deploys anything. It does not check the backend.
+- **Check Backend** (`check-backend.yml`): syntax check and lint (ruff, pinned) of the Lambda code, a few seconds. It runs on **every** pull request (no path filter), so it can be required, and the backend pipeline runs it first. The frontend pipeline does not run it. It has no tests (the Lambda has none yet) and no AWS access.
+- **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): **automatic** on every push to `main` (this includes merged Dependabot updates). It runs Lint, Test & Build first. Only if everything passes, it builds the site, then deploys to **dev** (S3 sync + CloudFront invalidation). No frontend archive is kept in S3: a past version is rebuilt from its git commit. A manual run lets you choose `dev` or `prod`; prod is never deployed automatically. The API URL is baked into the build, so the build uses the file of the chosen environment: `.env.production` for dev (also what the checks build with), `.env.prod` for prod (Vite mode `prod`).
+- **Package and Push Backend** (`package-and-push-backend.yml`): **manual only**. Run it from `main`, choosing the environment (`dev` or `prod`) and a new version tag (for example `v1.2.0`). `latest` and tags with unusual characters are refused; the workflow does not check whether the tag was already used, so pick one that was not. It first runs Check Backend (a few seconds); nothing is packaged if it fails. It packages the VESE proxy Lambda (zip) and pushes `solar-roof-vese-proxy-<tag>.zip` to the backend artefact store of that environment (`solar-roof-<env>-backend-artifact-store`). It does not deploy: afterwards, set `source_code_version` to the same tag in `deploy.auto.tfvars.json` of the infrastructure repo of that environment and push (damquake-style).
+- **Dependabot** (`dependabot.yml`, `dependabot-automerge.yml`): once a month, one grouped pull request updates the npm libraries of the frontend and the GitHub Actions used by the workflows. There is no update for the backend (a single Python file without dependencies to install). **Every** Dependabot pull request, major versions included, is merged automatically once its checks pass: `main` only deploys to dev, and prod is deployed by hand. Before the first prod deployment, restrict the auto-merge to patch/minor again. For this to protect anything, "Lint, Test & Build" and "Check backend" must be required checks in the branch rules of `main`. A failing update stays open and blocks the others of its group until it is handled by hand. Once merged, the frontend is redeployed to dev. TypeScript major updates are ignored until `typescript-eslint` supports TypeScript 7.
+
+**Merge protection (GitHub setting, not in the code):** in Settings, Branches (or Rules), on `main`, turn on "Require status checks to pass before merging" and add two checks: **Lint, Test & Build** and **Check backend**. The checks only appear in the list after they have run once. From then on a pull request, Dependabot's included, cannot be merged while one of them fails.
 
 ### GitHub secrets required
 
 | Secret | Description |
 |--------|-------------|
 | `SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV` | ARN of the IAM **role** `SFOE-solar-roof-application-pipeline-role` (OIDC, dev account). Used by the frontend workflow (deploy) **and** by the backend workflow (Lambda zip push). It is the ARN of the role, not of a bucket |
-| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | Same, for the prod account (not used yet) |
+| `SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD` | Same, for the prod account (manual runs with `prod`) |
 | `SFOE_SOLAR_ROOF_CLOUDFRONT_DEV` | CloudFront distribution ID (dev) for cache invalidation |
 | `SFOE_SOLAR_ROOF_CLOUDFRONT_PROD` | CloudFront distribution ID (prod) for cache invalidation |
 
-Only dev is wired up for now. The frontend workflow still has an `environment` input (`dev`/`prod`) for a manual run, but the prod secrets do not exist yet. The backend workflow is dev only. The automatic frontend deployment on `main` always targets `dev`.
+Both workflows have an `environment` input (`dev`/`prod`) for a manual run; the prod secrets above must exist. The automatic frontend deployment on `main` always targets `dev`. To release to prod: run Package and Push Backend with `prod` and a new tag, set that tag in `deploy.auto.tfvars.json` of the prod infrastructure repo, then run Package and Deploy Frontend with `prod`.
 
 > **Note:** The VESE API key (stored in AWS Secrets Manager) is **not** a GitHub secret and is **not** used by the application. The infrastructure repo references the secret by name. The frontend only ever uses the public API Gateway URL (`VITE_PVTARIF_API_URL`).
 

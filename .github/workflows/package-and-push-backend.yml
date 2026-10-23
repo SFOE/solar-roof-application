@@ -1,26 +1,35 @@
 name: Package and Push Backend (VESE proxy Lambda)
 
-# BACKEND only, MANUAL only, DEV only (the frontend deploys automatically:
-# package-and-deploy-frontend.yml).
+# BACKEND only, MANUAL only (the frontend deploys automatically to dev:
+# package-and-deploy-frontend.yml). The environment is chosen at each run (dev or prod).
 #
-# Packages the VESE proxy Lambda (zip) and pushes the versioned zip to the dev backend
-# artefact store (same model as damquake). It does NOT deploy. The workflow is run by hand
-# with the tag to publish; the Lambda is updated afterwards, when the infrastructure repo
-# (prometheon-solar-roof-dev) sets source_code_version, in deploy.auto.tfvars.json, to the
-# pushed tag and that change is pushed.
+# Packages the VESE proxy Lambda (zip) and pushes the versioned zip to the backend artefact
+# store of the chosen environment (same model as damquake). It does NOT deploy. The workflow is
+# run by hand with the tag to publish; the Lambda is updated afterwards, when the infrastructure
+# repo of that environment (prometheon-solar-roof-dev or -prod) sets source_code_version, in
+# deploy.auto.tfvars.json, to the pushed tag and that change is pushed.
 # The file written in S3 is named solar-roof-vese-proxy-<tag>.zip.
 #
 # The tag is required and must be new: re-pushing an existing tag does not change the S3 key,
 # so the infrastructure would see nothing to update. 'latest' is refused for that reason.
-# The Lambda code is not covered by the frontend tests of lint-test-build.yml: a syntax and lint check
-# (job `checks`) runs first, and the Lambda is only packaged if it passes. Run this workflow from main.
+# The Lambda code is not covered by the frontend tests of lint-test-build.yml: check-backend.yml (syntax
+# and lint) runs first, and the Lambda is only packaged if it passes. Run this workflow from main.
 #
-# AWS role: the GitHub secret SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV (ARN of the pipeline role),
-# the same one as the frontend workflow: the infrastructure creates a single pipeline role.
+# AWS role: the GitHub secret SFOE_SOLAR_ROOF_PIPELINE_ROLE_<ENV> (ARN of the pipeline role of that
+# environment's account), the same one as the frontend workflow: the infrastructure creates a single
+# pipeline role per account. Bucket: solar-roof-<env>-backend-artifact-store.
 
 on:
   workflow_dispatch:
     inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: "dev"
       version:
         description: "New artifact version tag (e.g. 'v1.2.0'). 'latest' is not allowed."
         required: true
@@ -31,23 +40,10 @@ permissions:
   contents: read
 
 jobs:
-  # Syntax check and lint of the Lambda code (a few seconds). The release stops here if it fails.
+  # Syntax check and lint of the Lambda code (check-backend.yml, a few seconds). The release stops here
+  # if it fails. The same check also runs on every pull request.
   checks:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v7
-
-      - uses: actions/setup-python@v6
-        with:
-          python-version: "3.12" # same as the Lambda runtime
-
-      - name: Syntax check
-        run: python -m py_compile backend/lambda_function.py
-
-      - name: Lint (ruff)
-        run: |
-          python -m pip install --quiet "ruff==0.15.17"
-          python -m ruff check backend
+    uses: ./.github/workflows/check-backend.yml
 
   build:
     needs: checks
@@ -87,7 +83,7 @@ jobs:
       artifact-name: solar-roof-vese-proxy
       artifact-type: .zip
       tag-name: ${{ inputs.version }}
-      s3-bucket: solar-roof-dev-backend-artifact-store
+      s3-bucket: solar-roof-${{ inputs.environment }}-backend-artifact-store
       scan-type: archive
     secrets:
-      aws-role: ${{ secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
+      aws-role: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
