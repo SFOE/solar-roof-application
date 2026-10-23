@@ -31,8 +31,7 @@ permissions:
   contents: read
 
 jobs:
-  # Same steps as the job `backend` of lint-test-build.yml: keep the two in step (pinned ruff included).
-  # Not shared through a reusable workflow, which would also run the frontend tests.
+  # Syntax check and lint of the Lambda code (a few seconds). The release stops here if it fails.
   checks:
     runs-on: ubuntu-latest
     steps:
