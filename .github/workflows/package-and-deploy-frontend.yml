@@ -7,7 +7,9 @@ name: Package and Deploy Frontend
 # they pass, the site is built, then deployed to dev (S3 sync + CloudFront invalidation).
 #
 # Manual run (workflow_dispatch): same pipeline, with a choice of environment (dev or prod).
-# Use it for prod, which is never deployed automatically.
+# Use it for prod, which is never deployed automatically. The build uses the API URL of the
+# chosen environment (.env.production for dev, .env.prod for prod).
+# AWS secrets: SFOE_SOLAR_ROOF_PIPELINE_ROLE_<ENV> and SFOE_SOLAR_ROOF_CLOUDFRONT_<ENV>.
 #
 # The build is handed from the `build` job to the `deploy` job as a short-lived workflow
 # artifact (1 day). It is NOT archived in S3: the source of truth for any past version is the
@@ -45,6 +47,8 @@ jobs:
   build:
     needs: checks
     runs-on: ubuntu-latest
+    env:
+      ENVIRONMENT: ${{ inputs.environment || 'dev' }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -58,8 +62,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build production
-        run: npm run build-only
+      # The API URL is baked into the build, so the build depends on the environment:
+      # dev uses the default mode (.env.production), prod uses the Vite mode "prod" (.env.prod).
+      - name: Build
+        run: |
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            npm run build-only -- --mode prod
+          else
+            npm run build-only
+          fi
 
       - name: Package dist folder
         run: |

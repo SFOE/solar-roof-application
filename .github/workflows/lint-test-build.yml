@@ -6,8 +6,8 @@ name: Lint, Test & Build
 # - On a push to main: not triggered here. package-and-deploy-frontend.yml calls this
 #   workflow first (workflow_call) and deploys the frontend only if it passes, so the
 #   checks run once per push and gate the deployment of the same commit.
-# FRONTEND only. The backend (Lambda) is checked by its own workflow, package-and-push-backend.yml
-# (job `checks`, run before the Lambda is packaged), so that a frontend deployment never runs it.
+# FRONTEND only. The backend (Lambda) has its own check, check-backend.yml, which also runs on every
+# pull request but is not called by the frontend deployment.
 
 on:
   pull_request:

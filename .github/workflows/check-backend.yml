@@ -1,0 +1,39 @@
+name: Check Backend
+
+# Syntax check and lint of the VESE proxy Lambda (backend/lambda_function.py). Takes a few seconds.
+#
+# - On EVERY pull request (no path filter): the check always runs, so it can be marked as
+#   "required" in the branch rules of main and a pull request cannot be merged if it fails.
+# - Called by package-and-push-backend.yml: the Lambda is only packaged if this passes.
+# The frontend pipeline does NOT run it: a frontend deployment has no reason to lint the Lambda.
+# It does not run tests (the Lambda has none yet) and does not touch AWS.
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    # This name is the status check to mark as "required" in the branch rules of main.
+    name: Check backend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12" # same as the Lambda runtime
+
+      - name: Syntax check
+        run: python -m py_compile backend/lambda_function.py
+
+      # Pinned on purpose: a new ruff release must not break the check by itself.
+      - name: Lint (ruff)
+        run: |
+          python -m pip install --quiet "ruff==0.15.17"
+          python -m ruff check backend
