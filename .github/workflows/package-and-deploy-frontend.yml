@@ -4,15 +4,14 @@ name: Package and Deploy Frontend
 #
 # On every push to main (this includes merged Dependabot updates, which keeps the libraries
 # maintained): lint, type-check, build and E2E tests run first (lint-test-build.yml). Only if
-# they pass, the site is packaged as a versioned artifact, pushed to the artefact store, then
-# deployed to dev (S3 sync + CloudFront invalidation).
+# they pass, the site is built, then deployed to dev (S3 sync + CloudFront invalidation).
 #
-# Manual run (workflow_dispatch): same pipeline, with a choice of environment (dev or prod)
-# and an optional version. Use it for prod, which is never deployed automatically.
+# Manual run (workflow_dispatch): same pipeline, with a choice of environment (dev or prod).
+# Use it for prod, which is never deployed automatically.
 #
-# The artifact version is the input `version` when given, otherwise `sha-<7 first chars of
-# the commit>`. The frontend artifact is only a record: the deployed site is the one built in
-# the same run.
+# The build is handed from the `build` job to the `deploy` job as a short-lived workflow
+# artifact (1 day). It is NOT archived in S3: the source of truth for any past version is the
+# git history (rebuild from the commit).
 
 on:
   push:
@@ -20,11 +19,6 @@ on:
       - main
   workflow_dispatch:
     inputs:
-      version:
-        description: "Artifact version tag (e.g. 'v1.2.0'). Leave empty to use the commit (sha-xxxxxxx)."
-        required: false
-        type: string
-        default: ""
       environment:
         description: "Target environment"
         required: true
@@ -51,23 +45,9 @@ jobs:
   build:
     needs: checks
     runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.version.outputs.tag }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
-
-      - name: Compute artifact version
-        id: version
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-        run: |
-          if [ -n "$INPUT_VERSION" ]; then
-            TAG="$INPUT_VERSION"
-          else
-            TAG="sha-${GITHUB_SHA::7}"
-          fi
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Set up Node.js
         uses: actions/setup-node@v7
@@ -106,7 +86,7 @@ jobs:
       aws-role: ${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_PROD || secrets.SFOE_SOLAR_ROOF_PIPELINE_ROLE_DEV }}
 
   deploy:
-    needs: [build, archive]
+    needs: build
     runs-on: ubuntu-latest
     env:
       ENVIRONMENT: ${{ inputs.environment || 'dev' }}
@@ -132,5 +112,5 @@ jobs:
 
       - name: Invalidate CloudFront cache
         run: |
-          DISTRIBUTION_ID="${{ inputs.environment == 'prod' && secrets.CLOUDFRONT_DISTRIBUTION_ID_PROD || secrets.CLOUDFRONT_DISTRIBUTION_ID_DEV }}"
+          DISTRIBUTION_ID="${{ inputs.environment == 'prod' && secrets.SFOE_SOLAR_ROOF_CLOUDFRONT_PROD || secrets.SFOE_SOLAR_ROOF_CLOUDFRONT_DEV }}"
           aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"

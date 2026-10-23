@@ -15,6 +15,7 @@ Lambda, so none is set here.
 """
 
 import json
+import logging
 import os
 import urllib.error
 import urllib.request
@@ -25,6 +26,17 @@ from botocore.exceptions import ClientError
 
 VESE_BASE_URL = "https://opendata.vese.ch/pvtarif/api/getData"
 
+# Logging: the Lambda runs with the JSON log format (see the infrastructure), so the keys
+# passed in `extra` become JSON fields. The "event" field is counted by CloudWatch metric
+# filters that raise the alarms. If you rename an event, change the filters in the
+# infrastructure repository (monitoring.tf).
+#   secret_unavailable  : the VESE key cannot be read from Secrets Manager
+#   vese_auth_rejected  : VESE answers 401/403 (key refused)
+#   vese_http_error     : VESE answers another HTTP error (field upstream_status)
+#   vese_unreachable    : timeout, DNS or TLS error when calling VESE
+# Never log the URL, the key or an exception text: they can contain the key.
+logger = logging.getLogger(__name__)
+
 _secrets_client = boto3.client("secretsmanager")
 _cached_api_key = None
 
@@ -32,7 +44,9 @@ _cached_api_key = None
 def get_api_key():
     """Return the VESE key from Secrets Manager (cached), or None if unavailable.
 
-    The secret is either the raw key or a JSON object {"VESE_API_KEY": "<key>"}.
+    The secret is either the raw key or a JSON object {"VESE_API_KEY": "<key>"}. The
+    field name is matched without regard to case, because the secret itself is called
+    vese_api_key and the same name is easy to type as the field.
     """
     global _cached_api_key
     if _cached_api_key:
@@ -40,6 +54,9 @@ def get_api_key():
 
     secret_id = os.environ.get("VESE_SECRET_ARN")
     if not secret_id:
+        logger.error(
+            "VESE_SECRET_ARN is not set", extra={"cause": "no_secret_arn"}
+        )
         return None
 
     try:
@@ -47,17 +64,35 @@ def get_api_key():
             "SecretString"
         )
     except ClientError as e:
-        print(f"[VESE] Cannot read secret: {e.response['Error']['Code']}")
+        logger.error(
+            "Cannot read the VESE secret",
+            extra={"cause": e.response["Error"]["Code"]},
+        )
         return None
     if not secret:
+        logger.error("The VESE secret is empty", extra={"cause": "empty_secret"})
         return None
 
     secret = secret.strip()
     if secret.startswith("{"):
         try:
-            secret = json.loads(secret).get("VESE_API_KEY")
+            fields = json.loads(secret)
         except ValueError:
-            print("[VESE] Secret is not valid JSON")
+            logger.error(
+                "The VESE secret is not valid JSON", extra={"cause": "invalid_json"}
+            )
+            return None
+        secret = None
+        if isinstance(fields, dict):
+            secret = next(
+                (v for k, v in fields.items() if str(k).upper() == "VESE_API_KEY"),
+                None,
+            )
+        if not secret:
+            logger.error(
+                "The VESE secret has no VESE_API_KEY field",
+                extra={"cause": "missing_field"},
+            )
             return None
 
     _cached_api_key = secret or None
@@ -67,6 +102,9 @@ def get_api_key():
 def lambda_handler(event, context):
     api_key = get_api_key()
     if not api_key:
+        logger.error(
+            "VESE API key not available", extra={"event": "secret_unavailable"}
+        )
         return error_response(500, "API key not configured")
 
     raw_path = event.get("rawPath", "")
@@ -109,10 +147,29 @@ def proxy_request(path, params, api_key):
             # VESE injects BOM characters into its JSON responses
             data = response.read().decode("utf-8").replace("\ufeff", "")
     except urllib.error.HTTPError as e:
+        auth_rejected = e.code in (401, 403)
+        # A 4xx caused by a bad parameter is a warning; an auth refusal or a 5xx is an error.
+        level = logging.ERROR if auth_rejected or e.code >= 500 else logging.WARNING
+        logger.log(
+            level,
+            "VESE API answered with an HTTP error",
+            extra={
+                "event": "vese_auth_rejected" if auth_rejected else "vese_http_error",
+                "upstream_status": e.code,
+                "vese_path": path,
+            },
+        )
         return error_response(e.code, f"VESE API error: {e.code}")
     except Exception as e:
-        # Never return the exception text: it could contain the URL (and the key).
-        print(f"[VESE] Request failed: {type(e).__name__}")
+        # Never return or log the exception text: it could contain the URL (and the key).
+        logger.error(
+            "VESE API unreachable",
+            extra={
+                "event": "vese_unreachable",
+                "error_type": type(e).__name__,
+                "vese_path": path,
+            },
+        )
         return error_response(502, "Failed to reach VESE API")
 
     return {
