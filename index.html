@@ -7,6 +7,11 @@
     <title>Sonnendach.ch</title>
     <meta name="description" content="Wie viel Strom und Wärme kann mein Dach produzieren? Eine Anwendung des Bundesamts für Energie.">
     <meta name="author" content="Swiss Federal Office of Energy">
+    <!-- The map (WMTS tiles + basemap thumbnails) and the address search both hit these
+         swisstopo hosts almost immediately after load; preconnect so the TLS handshake isn't
+         on the critical path to the first tile/search request. -->
+    <link rel="preconnect" href="https://wmts.geo.admin.ch" crossorigin>
+    <link rel="preconnect" href="https://api3.geo.admin.ch" crossorigin>
   </head>
   <body>
     <div id="app"></div>

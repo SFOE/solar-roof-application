@@ -24,6 +24,15 @@ E2E tests need a production build first: `npm run build-only && npm run test:e2e
 (the `start-server-and-test` package boots `vite preview` on port 4173, waits
 for it, then runs `cypress run --e2e`).
 
+`vite.config.ts` only loads `vite-plugin-vue-devtools` when `mode ===
+'development'` (matching drill-frontend) — never in a build, dev or prod.
+The production build also splits `ol` into its own chunk
+(`rolldownOptions.output.codeSplitting`) since it rarely changes between
+app releases, so browsers can keep reusing the cached chunk across
+deploys, and disables sourcemaps. `index.html` preconnects to
+`wmts.geo.admin.ch` and `api3.geo.admin.ch` since the map tiles and search
+hit those hosts almost immediately after load.
+
 ## Installing dependencies — `npm ci` only
 
 A `preinstall` guard (`scripts/guard-install.js`) blocks plain `npm install`
