@@ -1,0 +1,38 @@
+name: Security
+
+# npm audit (via audit-ci) on every pull request and on push to main. Catches a vulnerable
+# dependency (and, combined with the Dependabot cooldown, gives a freshly-published malicious
+# version time to be caught by the advisory databases before it would ever be pulled in).
+# audit-ci (not plain `npm audit`) is used so a specific, reviewed advisory can be allowlisted
+# in audit-ci.jsonc instead of either failing the build with no fix available or disabling the
+# audit gate entirely.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  npm-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      # --ignore-scripts: see lint-test-build.yml. This job only audits the lockfile, it never
+      # builds or runs the app, so no dependency install scripts are needed at all here.
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Run npm audit
+        run: npx audit-ci@7.1.0 --config ./audit-ci.jsonc

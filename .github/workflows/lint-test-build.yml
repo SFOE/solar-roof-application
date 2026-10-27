@@ -29,8 +29,24 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
+      # --ignore-scripts: dependency install/postinstall scripts never run in CI, so a
+      # compromised transitive dependency can't execute arbitrary code during a workflow run.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      # Cypress's own postinstall binary download is skipped by --ignore-scripts above, so fetch
+      # and verify it explicitly instead of relying on an implicit lifecycle script.
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Cypress binary
+        run: npx cypress install
+
+      - name: Verify Cypress
+        run: npx cypress verify
 
       # Check only (no --fix): CI must report problems, not silently rewrite files.
       - name: Lint

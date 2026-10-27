@@ -4,6 +4,14 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    # Delay a freshly-published version before Dependabot proposes it, so a version published in
+    # the hours/days after a supply-chain compromise doesn't get picked up (and auto-merged) right
+    # away. Majors get the longest delay since they're the least covered by this repo's tests.
+    cooldown:
+      default-days: 7
+      semver-major-days: 30
+      semver-minor-days: 14
+      semver-patch-days: 3
     groups:
       all-dependencies:
         patterns:

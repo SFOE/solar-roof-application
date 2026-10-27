@@ -24,6 +24,29 @@ E2E tests need a production build first: `npm run build-only && npm run test:e2e
 (the `start-server-and-test` package boots `vite preview` on port 4173, waits
 for it, then runs `cypress run --e2e`).
 
+## Installing dependencies — `npm ci` only
+
+A `preinstall` guard (`scripts/guard-install.js`) blocks plain `npm install`
+(locally and in CI) so nobody accidentally drifts off the committed,
+reviewed `package-lock.json`. Only two install paths are legitimate:
+
+- `npm ci` — normal install, from the lockfile, for a fresh checkout or
+  after pulling changes. This is what the guard allows and what every CI
+  workflow uses.
+- `npm install <package> --ignore-scripts` — the *only* way to add/update a
+  dependency, since `--ignore-scripts` is also the only way to bypass the
+  guard itself (an npm limitation, not a workaround specific to this repo).
+  Commit the resulting `package.json`/`package-lock.json` diff.
+
+Every CI workflow installs with `npm ci --ignore-scripts`, so a dependency's
+`postinstall`/`prepare` scripts never execute during a workflow run. The one
+script CI actually needs — downloading the Cypress browser binary, normally
+a `postinstall` side effect — is run explicitly instead
+(`npx cypress install` + `npx cypress verify` in `lint-test-build.yml`,
+cached by `package-lock.json`'s hash). Never add `ignore-scripts=true` to
+`.npmrc`; that would disable the `preinstall` guard for everyone, not just
+bypass it for one `npm install` command.
+
 ## Environment files
 
 Three env files, each with a distinct role — don't conflate them:
@@ -61,13 +84,21 @@ regardless of which `.env*` file it came from.
   `deploy.auto.tfvars.json` in the infrastructure repo and pushing there.
   Tags must be explicit (no `latest`, no unusual characters) and are not
   checked for reuse — pick a tag that hasn't been used.
+- **`security.yml`** — `npm audit` via `audit-ci` (config: `audit-ci.jsonc`),
+  on every PR and on push to `main`. Fails on a high/critical advisory with
+  no allowlisted entry; use `audit-ci.jsonc`'s `allowlist` for a specific,
+  reviewed advisory that has no fix available yet, rather than disabling the
+  gate. Installs with `npm ci --ignore-scripts` like the other workflows;
+  this job only audits the lockfile, so it never needs the Cypress binary.
 - **Dependabot** (`dependabot.yml` + `dependabot-automerge.yml`) — monthly
-  grouped PR for npm deps + GitHub Actions. Every Dependabot PR (including
-  majors) auto-merges once its required checks pass, since `main` only
-  auto-deploys to **dev**. Before the first prod deployment, tighten
-  auto-merge back to patch/minor. `main` requires `lint-test-build.yml` and
-  `check-backend.yml` as passing status checks for this to actually gate
-  anything.
+  grouped PR for npm deps + GitHub Actions. A `cooldown` (7 days default, 3
+  patch / 14 minor / 30 major) delays how soon a freshly published version
+  can be proposed, so a version published during a supply-chain compromise
+  isn't picked up immediately. Every Dependabot PR (including majors)
+  auto-merges once its required checks pass, since `main` only auto-deploys
+  to **dev**. Before the first prod deployment, tighten auto-merge back to
+  patch/minor. `main` requires `lint-test-build.yml` and `check-backend.yml`
+  as passing status checks for this to actually gate anything.
 
 ## Deploying to prod (manual, two repos)
 

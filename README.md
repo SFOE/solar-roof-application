@@ -61,8 +61,30 @@ The application does not collect, store or process any personal data. All API ca
 ### Setup
 
 ```bash
-npm install
+npm ci
 ```
+
+### Installing dependencies
+
+Only `npm ci` is allowed — a `preinstall` guard (`scripts/guard-install.js`) blocks plain
+`npm install`, which can silently drift away from the committed, reviewed `package-lock.json`
+(e.g. picking up a newer transitive version within a semver range). `npm ci` always installs
+exactly what's in the lockfile and fails if it's out of sync with `package.json`.
+
+- Fresh install / after pulling changes: `npm ci`
+- Add or update a dependency: `npm install <package> --ignore-scripts`, then verify with
+  `npm run build` and `npm run lint-check`, then commit the updated `package.json` and
+  `package-lock.json`. `--ignore-scripts` is required here because it's the only way to bypass
+  the `preinstall` guard (an npm limitation, not a workaround specific to this project) — do
+  **not** add `ignore-scripts=true` to `.npmrc`, since that would silently disable the guard for
+  everyone.
+- CI always runs `npm ci --ignore-scripts`: dependency install scripts (`postinstall`, etc.)
+  never execute in CI, so a compromised transitive dependency can't run arbitrary code during a
+  workflow run. Any install step CI genuinely needs (the Cypress browser binary) is run
+  explicitly (`npx cypress install`) instead of relying on an implicit lifecycle script.
+- `npm audit` (via `audit-ci`, config in `audit-ci.jsonc`) runs on every pull request and on push
+  to `main` (`.github/workflows/security.yml`), and Dependabot delays a freshly published
+  version before proposing it (`cooldown` in `dependabot.yml`) — see "Dependabot" below.
 
 ### Environment variables
 
@@ -149,7 +171,8 @@ npm run build-only && npm run test:e2e
 - **Check Backend** (`check-backend.yml`): syntax check and lint (ruff, pinned) of the Lambda code, a few seconds. It runs on **every** pull request (no path filter), so it can be required, and the backend pipeline runs it first. The frontend pipeline does not run it. It has no tests (the Lambda has none yet) and no AWS access.
 - **Package and Deploy Frontend** (`package-and-deploy-frontend.yml`): **automatic** on every push to `main` (this includes merged Dependabot updates). It runs Lint, Test & Build first. Only if everything passes, it builds the site, then deploys to **dev** (S3 sync + CloudFront invalidation). No frontend archive is kept in S3: a past version is rebuilt from its git commit. A manual run lets you choose `dev` or `prod`; prod is never deployed automatically. The API URL is baked into the build, so the build uses the file of the chosen environment: `.env.production` for dev (also what the checks build with), `.env.prod` for prod (Vite mode `prod`).
 - **Package and Push Backend** (`package-and-push-backend.yml`): **manual only**. Run it from `main`, choosing the environment (`dev` or `prod`) and a new version tag (for example `v1.2.0`). `latest` and tags with unusual characters are refused; the workflow does not check whether the tag was already used, so pick one that was not. It first runs Check Backend (a few seconds); nothing is packaged if it fails. It packages the VESE proxy Lambda (zip) and pushes `solar-roof-vese-proxy-<tag>.zip` to the backend artefact store of that environment (`solar-roof-<env>-backend-artifact-store`). It does not deploy: afterwards, set `source_code_version` to the same tag in `deploy.auto.tfvars.json` of the infrastructure repo of that environment and push (damquake-style).
-- **Dependabot** (`dependabot.yml`, `dependabot-automerge.yml`): once a month, one grouped pull request updates the npm libraries of the frontend and the GitHub Actions used by the workflows. There is no update for the backend (a single Python file without dependencies to install). **Every** Dependabot pull request, major versions included, is merged automatically once its checks pass: `main` only deploys to dev, and prod is deployed by hand. Before the first prod deployment, restrict the auto-merge to patch/minor again. For this to protect anything, "Lint, Test & Build" and "Check backend" must be required checks in the branch rules of `main`. A failing update stays open and blocks the others of its group until it is handled by hand. Once merged, the frontend is redeployed to dev. TypeScript major updates are ignored until `typescript-eslint` supports TypeScript 7.
+- **Security** (`security.yml`): runs `npm audit` (via `audit-ci`, config in `audit-ci.jsonc`) on every pull request and on push to `main`. Fails on a high or critical advisory with no allowlisted entry. A specific, reviewed advisory with no fix available can be allowlisted in `audit-ci.jsonc` instead of either failing the build indefinitely or disabling the audit gate entirely.
+- **Dependabot** (`dependabot.yml`, `dependabot-automerge.yml`): once a month, one grouped pull request updates the npm libraries of the frontend and the GitHub Actions used by the workflows. A `cooldown` delays how soon a freshly published version can be proposed (7 days by default, 3 for patch, 14 for minor, 30 for major), so a version published during a supply-chain compromise isn't picked up right away. There is no update for the backend (a single Python file without dependencies to install). **Every** Dependabot pull request, major versions included, is merged automatically once its checks pass: `main` only deploys to dev, and prod is deployed by hand. Before the first prod deployment, restrict the auto-merge to patch/minor again. For this to protect anything, "Lint, Test & Build" and "Check backend" must be required checks in the branch rules of `main`. A failing update stays open and blocks the others of its group until it is handled by hand. Once merged, the frontend is redeployed to dev. TypeScript major updates are ignored until `typescript-eslint` supports TypeScript 7.
 
 **Merge protection (GitHub setting, not in the code):** in Settings, Branches (or Rules), on `main`, turn on "Require status checks to pass before merging" and add two checks: **Lint, Test & Build** and **Check backend**. The checks only appear in the list after they have run once. From then on a pull request, Dependabot's included, cannot be merged while one of them fails.
 

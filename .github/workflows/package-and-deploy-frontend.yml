@@ -59,8 +59,10 @@ jobs:
           node-version: "22"
           cache: "npm"
 
+      # --ignore-scripts: dependency install/postinstall scripts never run in CI (see
+      # lint-test-build.yml). This job only builds, so no Cypress binary is needed here.
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # The API URL is baked into the build, so the build depends on the environment:
       # dev uses the default mode (.env.production), prod uses the Vite mode "prod" (.env.prod).
