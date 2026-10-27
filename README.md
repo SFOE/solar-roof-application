@@ -3,12 +3,12 @@
 ![Section](https://img.shields.io/badge/Section-GO-blue)
 ![Status](https://img.shields.io/badge/Status-in--development-yellow)
 
-![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance-100-brightgreen)
-![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse_Accessibility-92-green)
-![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse_Best_Practices-100-brightgreen)
+![Lighthouse Performance](https://img.shields.io/badge/Lighthouse_Performance_(mobile)-78-orange)
+![Lighthouse Accessibility](https://img.shields.io/badge/Lighthouse_Accessibility_(mobile)-96-brightgreen)
+![Lighthouse Best Practices](https://img.shields.io/badge/Lighthouse_Best_Practices_(mobile)-100-brightgreen)
 ![Lighthouse SEO](https://img.shields.io/badge/Lighthouse_SEO-100-brightgreen)
 
-<sub>Lighthouse scores above are from a manual run against a production build (`npm run build-only && npm run preview`); they are not collected or updated by CI, so re-check before relying on them.</sub>
+<sub>Mobile Lighthouse scores (SEO doesn't vary by device) from a manual run against a production build (`npm run build-only && npm run preview`); they are not collected or updated by CI, so re-check before relying on them.</sub>
 
 # Solar Roof Application
 
