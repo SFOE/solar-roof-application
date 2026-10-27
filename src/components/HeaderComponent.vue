@@ -11,7 +11,13 @@
         <div class="logo-title-group">
           <picture>
             <source media="(max-width: 768px)" :srcset="swissMobileLogo" />
-            <img class="logo" :src="confederationLogo" alt="Swiss Confederation Logo" />
+            <img
+              class="logo"
+              :src="confederationLogo"
+              alt="Swiss Confederation Logo"
+              width="459"
+              height="115"
+            />
           </picture>
           <div class="divider"></div>
           <h1 class="title">{{ $t('header_title') }}</h1>

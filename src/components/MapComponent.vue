@@ -28,7 +28,9 @@
           @click="switchBasemap(bm.id)"
           :title="$t(bm.labelKey)"
         >
-          <img :src="bm.thumbnail" :alt="$t(bm.labelKey)" />
+          <!-- Decorative: the visible label right below already gives the button its
+               accessible name, so an alt here would just duplicate it for screen readers. -->
+          <img :src="bm.thumbnail" alt="" width="70" height="50" />
           <span class="basemap-label">{{ $t(bm.labelKey) }}</span>
         </button>
       </template>
