@@ -126,7 +126,7 @@ npm run build-only && npm run test:e2e
 ```
 ├── src/
 │   ├── components/       ← Vue components (Map, SearchBar, InfoPanel, SummaryBanner, ModeToggle, SelectionModeToggle, FAQ, Header, Footer, LanguageSwitcher)
-│   ├── composables/      ← Reusable logic (useProjections, useSolarIdentify, usePvTarif)
+│   ├── composables/      ← Reusable logic (useProjections, useSolarIdentify, usePvTarif, useSuitabilityColor)
 │   ├── locales/          ← i18n translations (de, fr, it, en)
 │   ├── stores/           ← Pinia stores (mapStore, languageStore)
 │   ├── types/            ← TypeScript interfaces (solar.ts)
