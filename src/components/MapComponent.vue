@@ -338,7 +338,9 @@ onUnmounted(() => {
 
 .map-attribution {
   position: absolute;
-  bottom: 6px;
+  /* Sits above OL's scale line control (bottom-left, ~20px tall by default —
+     see ol/ol.css's .ol-scale-line) so the two don't overlap. */
+  bottom: 28px;
   left: 8px;
   font-size: 0.65rem;
   color: #333;
