@@ -338,16 +338,18 @@ onUnmounted(() => {
 
 .map-attribution {
   position: absolute;
-  /* Sits above OL's scale line control (bottom-left, ~20px tall by default —
-     see ol/ol.css's .ol-scale-line) so the two don't overlap. */
-  bottom: 28px;
-  left: 8px;
+  /* Bottom-center, clear of OL's scale line (bottom-left) and the
+     basemap-switcher (bottom-right). */
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 0.65rem;
   color: #333;
   background: rgba(255, 255, 255, 0.7);
   padding: 1px 6px;
   border-radius: 3px;
   z-index: 10;
+  white-space: nowrap;
 }
 
 .basemap-switcher {
