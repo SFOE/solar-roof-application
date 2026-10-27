@@ -327,6 +327,9 @@ onUnmounted(() => {
 <style scoped>
 .map-container {
   position: relative;
+  /* Was the map-wrapper's bottom margin; moved here so it doesn't throw off
+     the bottom-edge alignment of the overlays below (see note there). */
+  margin-bottom: 0.5rem;
 }
 
 .map-wrapper {
@@ -335,28 +338,43 @@ onUnmounted(() => {
   border: 1px solid #ccc;
   border-radius: 4px;
   overflow: hidden;
-  margin: 0.5rem 0;
+  margin-top: 0.5rem;
 }
 
+/* OL's scale line is positioned relative to .map-wrapper's own box, while
+   the attribution bar and basemap switcher below are positioned relative to
+   .map-container. With no bottom margin on .map-wrapper (moved to
+   .map-container above), both boxes share the same bottom edge, so the same
+   "bottom" value lines all three up. 20px matches .ol-scale-line's natural
+   rendered height, so the attribution bar comes out the same height too. */
 .map-attribution {
   position: absolute;
-  /* Bottom-center, clear of OL's scale line (bottom-left) and the
-     basemap-switcher (bottom-right). */
-  bottom: 6px;
+  bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
+  height: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   font-size: 0.65rem;
   color: #333;
   background: rgba(255, 255, 255, 0.7);
-  padding: 1px 6px;
+  padding: 0 6px;
   border-radius: 3px;
   z-index: 10;
   white-space: nowrap;
 }
 
+:deep(.ol-scale-line) {
+  height: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+}
+
 .basemap-switcher {
   position: absolute;
-  bottom: 30px;
+  bottom: 8px;
   right: 12px;
   display: flex;
   gap: 6px;
