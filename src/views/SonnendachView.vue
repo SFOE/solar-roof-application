@@ -102,7 +102,7 @@ watch(
 }
 
 .app-description :deep(a) {
-  color: #1565c0;
+  color: var(--color-link);
   text-decoration: none;
   font-weight: 600;
 }

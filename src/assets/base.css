@@ -1,3 +1,24 @@
+:root {
+  /* Brand & UI colors — components should reference these instead of
+     repeating hex values (see .kiro/steering/coding-standards.md). */
+  --color-primary: #2f4356; /* header/footer brand background */
+  --color-accent: #d32f2f; /* active toggle state, focus border, CTA red */
+  --color-link: #1565c0;
+  --color-text: #333;
+  --color-muted: #666;
+  --color-border: #ddd;
+  --color-border-light: #eee;
+
+  /* Suitability class scale (1 = low, 5 = excellent). Single source of truth
+     for CSS; mirrored for JS-driven styling (inline styles, computed colors)
+     in src/composables/useSuitabilityColor.ts. Keep both in sync. */
+  --suitability-1: #4fc3f7;
+  --suitability-2: #fdd835;
+  --suitability-3: #ff8f00;
+  --suitability-4: #e65100;
+  --suitability-5: #b71c1c;
+}
+
 body {
   font-family: 'Frutiger LT Com', Roboto, 'Helvetica Neue', sans-serif;
   margin: 0;

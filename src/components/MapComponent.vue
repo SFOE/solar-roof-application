@@ -37,7 +37,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useProjections } from '@/composables/useProjections'
 import { useMapStore } from '@/stores/mapStore'
 import { useSolarIdentify } from '@/composables/useSolarIdentify'
@@ -118,6 +118,8 @@ let solarLayer: TileLayer | null = null
 
 // Vector layer for selection highlight — CONTOUR ONLY (no fill), to preserve suitability colors.
 // Double stroke: light halo underneath + colored outline on top for contrast.
+// '#d32f2f' mirrors --color-accent in src/assets/base.css. OpenLayers styles are plain JS and
+// can't read CSS custom properties directly, so this value is duplicated — keep both in sync.
 const outlineSource = new VectorSource()
 const outlineLayer = new VectorLayer({
   source: outlineSource,
@@ -302,6 +304,15 @@ onMounted(() => {
 
   mapInstance.value = map
 })
+
+// Release the map's DOM/canvas and rendering context. There is only one route
+// in this app so this rarely runs today, but it's the documented OpenLayers
+// cleanup step and keeps HMR component reloads during development from
+// accumulating detached map instances.
+onUnmounted(() => {
+  mapInstance.value?.setTarget(undefined)
+  mapInstance.value = undefined
+})
 </script>
 
 <style scoped>
@@ -345,9 +356,9 @@ onMounted(() => {
   right: 12px;
   padding: 3px 8px;
   border-radius: 3px;
-  border: 1px solid #d32f2f;
+  border: 1px solid var(--color-accent);
   background: rgba(255, 255, 255, 0.8);
-  color: #d32f2f;
+  color: var(--color-accent);
   font-size: 0.7rem;
   font-weight: 400;
   cursor: pointer;
@@ -356,7 +367,7 @@ onMounted(() => {
 }
 
 .clear-selection-btn:hover {
-  background: #d32f2f;
+  background: var(--color-accent);
   color: #fff;
 }
 

@@ -34,7 +34,7 @@ const { t } = useI18n()
 .site-footer {
   width: 100vw;
   margin-left: calc(50% - 50vw);
-  background-color: #2f4356;
+  background-color: var(--color-primary);
   color: #fff;
   font-size: 0.875rem;
   line-height: 1.5;

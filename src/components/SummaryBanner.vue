@@ -37,19 +37,12 @@
 import { computed } from 'vue'
 import { useMapStore } from '@/stores/mapStore'
 import { useI18n } from 'vue-i18n'
+import { suitabilityColor } from '@/composables/useSuitabilityColor'
 
 const store = useMapStore()
 const { t } = useI18n()
 
-const SUITABILITY_COLORS: Record<number, string> = {
-  1: '#4fc3f7',
-  2: '#fdd835',
-  3: '#ff8f00',
-  4: '#e65100',
-  5: '#b71c1c',
-}
-
-const color = computed(() => SUITABILITY_COLORS[store.summary?.suitabilityClass ?? 0] || '#999')
+const color = computed(() => suitabilityColor(store.summary?.suitabilityClass))
 
 /** Very light tint of the class color for the banner background. */
 const tint = computed(() => {

@@ -8,11 +8,24 @@
     <h3>{{ $t('faq_title') }}</h3>
 
     <div class="faq-item" v-for="(item, index) in faqItems" :key="index">
-      <button class="faq-question" @click="toggle(index)" :aria-expanded="openIndices.has(index)">
+      <button
+        class="faq-question"
+        :id="`faq-question-${index}`"
+        @click="toggle(index)"
+        :aria-expanded="openIndices.has(index)"
+        :aria-controls="`faq-answer-${index}`"
+      >
         <span>{{ item.question }}</span>
-        <span class="faq-icon">{{ openIndices.has(index) ? '−' : '+' }}</span>
+        <span class="faq-icon" aria-hidden="true">{{ openIndices.has(index) ? '−' : '+' }}</span>
       </button>
-      <div v-if="openIndices.has(index)" class="faq-answer" v-html="item.answer"></div>
+      <div
+        v-if="openIndices.has(index)"
+        :id="`faq-answer-${index}`"
+        class="faq-answer"
+        role="region"
+        :aria-labelledby="`faq-question-${index}`"
+        v-html="item.answer"
+      ></div>
     </div>
   </div>
 </template>
@@ -85,7 +98,7 @@ const faqItems = computed(() => [
 }
 
 .faq-question:hover {
-  color: #d32f2f;
+  color: var(--color-accent);
 }
 
 .faq-icon {
@@ -105,7 +118,7 @@ const faqItems = computed(() => [
 }
 
 .faq-answer :deep(a) {
-  color: #1565c0;
+  color: var(--color-link);
   text-decoration: none;
   font-weight: 500;
 }

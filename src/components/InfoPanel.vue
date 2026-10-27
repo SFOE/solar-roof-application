@@ -158,6 +158,7 @@ import { useMapStore } from '@/stores/mapStore'
 import { useI18n } from 'vue-i18n'
 import { watch, computed } from 'vue'
 import { usePvTarif } from '@/composables/usePvTarif'
+import { suitabilityColor } from '@/composables/useSuitabilityColor'
 import type { SuitabilityDistribution } from '@/types/solar'
 
 const store = useMapStore()
@@ -262,18 +263,6 @@ function fmtOrientation(value: number | null): string {
 function suitabilityLabel(classNum: number): string {
   return t(`suitability_${classNum}`)
 }
-
-/** Returns the color matching the suitability class (same as map tiles) */
-function suitabilityColor(classNum: number): string {
-  const colors: Record<number, string> = {
-    1: '#4fc3f7',
-    2: '#fdd835',
-    3: '#ff8f00',
-    4: '#e65100',
-    5: '#b71c1c',
-  }
-  return colors[classNum] || '#999'
-}
 </script>
 
 <style scoped>
@@ -346,7 +335,7 @@ function suitabilityColor(classNum: number): string {
 }
 
 .info-label .inline-link {
-  color: #1565c0;
+  color: var(--color-link);
   text-decoration: none;
   font-weight: 600;
 }
@@ -369,11 +358,11 @@ function suitabilityColor(classNum: number): string {
   font-weight: 600;
   color: #fff;
 }
-.badge-1 { background: #4fc3f7; color: #333; }
-.badge-2 { background: #fdd835; color: #333; }
-.badge-3 { background: #ff8f00; }
-.badge-4 { background: #e65100; }
-.badge-5 { background: #b71c1c; }
+.badge-1 { background: var(--suitability-1); color: #333; }
+.badge-2 { background: var(--suitability-2); color: #333; }
+.badge-3 { background: var(--suitability-3); }
+.badge-4 { background: var(--suitability-4); }
+.badge-5 { background: var(--suitability-5); }
 
 .distribution {
   margin-top: 0;
@@ -412,11 +401,11 @@ function suitabilityColor(classNum: number): string {
   flex-shrink: 0;
 }
 
-.dist-square.badge-1 { background: #4fc3f7; }
-.dist-square.badge-2 { background: #fdd835; }
-.dist-square.badge-3 { background: #ff8f00; }
-.dist-square.badge-4 { background: #e65100; }
-.dist-square.badge-5 { background: #b71c1c; }
+.dist-square.badge-1 { background: var(--suitability-1); }
+.dist-square.badge-2 { background: var(--suitability-2); }
+.dist-square.badge-3 { background: var(--suitability-3); }
+.dist-square.badge-4 { background: var(--suitability-4); }
+.dist-square.badge-5 { background: var(--suitability-5); }
 
 .dist-label {
   flex: 1;
@@ -441,7 +430,7 @@ function suitabilityColor(classNum: number): string {
 }
 
 .map-link a {
-  color: #1565c0;
+  color: var(--color-link);
   text-decoration: none;
   font-weight: 600;
 }
@@ -460,7 +449,7 @@ function suitabilityColor(classNum: number): string {
 }
 
 .faq-link a {
-  color: #1565c0;
+  color: var(--color-link);
   text-decoration: none;
   font-weight: 600;
 }
