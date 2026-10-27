@@ -42,6 +42,10 @@ import { useProjections } from '@/composables/useProjections'
 import { useMapStore } from '@/stores/mapStore'
 import { useSolarIdentify } from '@/composables/useSolarIdentify'
 
+// OpenLayers' own stylesheet — required for its default controls (zoom +/-, rotate,
+// attribution) to render styled instead of as bare unstyled buttons/divs.
+import 'ol/ol.css'
+
 import Map from 'ol/Map'
 import View from 'ol/View'
 import TileLayer from 'ol/layer/Tile'
@@ -52,7 +56,7 @@ import WMTSTileGrid from 'ol/tilegrid/WMTS'
 import type Feature from 'ol/Feature'
 import { Stroke, Style } from 'ol/style'
 import { getCenter } from 'ol/extent'
-import { ScaleLine } from 'ol/control'
+import { ScaleLine, defaults as defaultControls } from 'ol/control'
 import type { MapBrowserEvent } from 'ol'
 
 const mapContainer = ref<HTMLDivElement>()
@@ -285,6 +289,9 @@ onMounted(() => {
   const map = new Map({
     target: mapContainer.value,
     layers: [basemapLayer, solarLayer, outlineLayer],
+    // Keep the default zoom/rotate controls, but drop OL's own attribution control: the
+    // i18n-aware ".map-attribution" bar in the template already covers that.
+    controls: defaultControls({ attribution: false }),
     view: new View({
       projection,
       center: swissCenter,
