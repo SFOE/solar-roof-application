@@ -78,7 +78,7 @@ jobs:
 
   scan-push:
     needs: build
-    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v12
+    uses: SFOE-prometheon/github-terraform-workflows/.github/workflows/s3-artifact-scan-push.yml@v14
     with:
       artifact-name: solar-roof-vese-proxy
       artifact-type: .zip
