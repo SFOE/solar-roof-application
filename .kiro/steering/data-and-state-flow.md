@@ -12,8 +12,10 @@ aggregation, or the VESE proxy works.
 ## Selection model (single source of truth)
 
 `mapStore.ts`'s `selectedSurfaces` (a `ref<SurfaceData[]>`, deduped by
-`featureId`) is the **only** state that gets mutated directly. Everything
-else is derived:
+`featureId`) is the **only** selection state that gets mutated directly. The
+other store refs are plain context values set by `MapComponent.vue` and the
+page (`clickCoords`, `selectedAddress`, `communeId`, `postalCode`, `noData`,
+`loading`), not derived data. All totals are derived:
 
 ```
 selectedSurfaces (ref, mutated)
@@ -27,8 +29,12 @@ if a component needs a new derived value, add a `computed()` next to
 itself. Duplicating derivation logic in a component is how the store and the
 UI drift apart.
 
-`selectionMode` (`'single'` | `'multi'`) only controls *how* clicks mutate
-`selectedSurfaces` (replace vs. accumulate) — it is not read anywhere else.
+`selectionMode` (`'single'` | `'multi'`) controls *how* clicks mutate
+`selectedSurfaces` (replace vs. accumulate) and whether a click that finds
+nothing clears the previous result (single) or keeps it (multi). Besides
+`MapComponent.vue`, it is only read for display: the toggle itself
+(`SelectionModeToggle.vue`) and the "New selection" button on the map (multi
+mode only). It is not part of the aggregation.
 `solarMode` (`'roofs'` | `'facades'`) controls which swisstopo layer is
 queried; switching it clears the selection (`setSolarMode()`) because
 `featureId`s are not comparable across the two layers.
@@ -37,10 +43,36 @@ queried; switching it clears the selection (`setSolarMode()`) because
 
 `heatingDemand`/`hotWaterDemand` come back identical on every surface of the
 same building (the swisstopo API repeats the building-level figure on each
-roof pane). `aggregateSurfaces()` dedupes by `buildingId` before summing
-them — see the `seenBuildings` map. If you add another building-level
+roof pane). `aggregateSurfaces()` dedupes by building before summing
+them — see the `seenBuildings` map and `buildingKey()`. A building is
+identified by its GWR EGID (`gwr_egid`), because the demand comes from the GWR
+and one GWR building can span several Sonnendach `building_id` (building
+parts, e.g. Chalberzaunweg 11, Ringoldswil). Without an EGID (0 or missing),
+the key falls back to `buildingId`. The same key gives `buildingCount`. If you add another building-level
 (rather than surface-level) field, follow the same dedup pattern instead of
 summing it per surface, or multi-surface selections will overcount it.
+
+### Solar-thermal yields are not additive per building
+
+The solar-thermal values of a surface (`heatYield`, `collectorArea`,
+`storageVolume`) are sized as if that surface were the **only** solar-thermal
+installation of its building, and `heatYield` counts the heat the building can
+actually use (Sonnendach technical report, chapter 7.5). Unlike PV (surplus
+electricity goes to the grid), they cannot be summed over several surfaces of
+the same building: two installations share the same demand.
+
+Decision (product): the **heat coverage %** (`summary.heatCoveragePercent`,
+shown in the summary banner and the info panel) is only given when all
+selected surfaces belong to **one building** (`buildingCount === 1`, same EGID) and is
+**capped at 100%** (`heatCoverage()` in `mapStore.ts`). Several surfaces of the
+same building keep a percentage (an upper bound, since each yield assumes it is
+the building's only installation). Surfaces of several buildings, or an
+unknown demand, give `null`: the info panel keeps its row and shows `-`; the
+summary banner leaves out its heat sentence.
+`aggregateSurfaces()` still sums `heatYield`, `collectorArea` and
+`storageVolume` for display — read those totals as a sum of individual
+potentials, not as what one combined installation would deliver. Changing this
+is a product decision; raise it with the user rather than changing it silently.
 
 ## swisstopo API usage (`useSolarIdentify.ts`)
 
@@ -90,10 +122,14 @@ section). The flow is split across three pieces that must stay in sync:
 3. **Lambda proxy** (`backend/lambda_function.py`) — the production
    equivalent. Fetches the key from AWS Secrets Manager (cached across warm
    invocations), never logs the key or a raw exception (which could contain
-   the key in the URL), and emits structured log events
-   (`secret_unavailable`, `vese_auth_rejected`, `vese_http_error`,
-   `vese_unreachable`) that CloudWatch metric filters key off — renaming one
-   requires updating `monitoring.tf` in the infrastructure repo too.
+   the key in the URL), and emits structured JSON log events in an `event`
+   field (`secret_unavailable`, `vese_auth_rejected`, `vese_http_error`,
+   `vese_unreachable`). Only the first two feed a CloudWatch metric filter
+   (`VeseConfigErrors`) and its e-mail alarm; the other two are deliberately
+   logged without an alarm (a VESE outage cannot be fixed on our side).
+   Renaming any event requires checking `monitoring.tf` in both
+   infrastructure repositories (dev and prod) — the filter matches the exact
+   string.
 
 Both proxies implement the **same two routes** (`/muni?idofs=`,
 `/evu?evuId=&year=`) and the **same BOM-stripping** — if you change one
@@ -109,6 +145,10 @@ commune. This is a deliberate simplification, not a bug — if multi-provider
 support is ever requested, it changes the UI contract (which tariff does
 the summary banner show?), so raise it as a product question before
 changing `fetchTarif()`'s loop.
+
+The tariff is fetched by `InfoPanel.vue` when `store.communeId` changes. When
+it becomes `null` (new search, or a building without GWR match) the previous
+tariff is cleared, so a tariff is never shown for another building.
 
 ## Pinia store style
 

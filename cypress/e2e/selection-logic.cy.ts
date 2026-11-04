@@ -56,9 +56,9 @@ describe('Selection logic: aggregation', () => {
   it('counts the heat demand of a building once, however many of its surfaces are selected', () => {
     const agg = aggregateSurfaces(
       [
-        surface({ featureId: 1, buildingId: 100, heatingDemand: 18000, hotWaterDemand: 3500 }),
-        surface({ featureId: 2, buildingId: 100, heatingDemand: 18000, hotWaterDemand: 3500 }),
-        surface({ featureId: 3, buildingId: 200, heatingDemand: 10000, hotWaterDemand: 2000 }),
+        surface({ featureId: 1, buildingId: 100, gwr_egid: 1, heatingDemand: 18000, hotWaterDemand: 3500 }),
+        surface({ featureId: 2, buildingId: 100, gwr_egid: 1, heatingDemand: 18000, hotWaterDemand: 3500 }),
+        surface({ featureId: 3, buildingId: 200, gwr_egid: 2, heatingDemand: 10000, hotWaterDemand: 2000 }),
       ],
       'roofs',
     )
@@ -66,6 +66,30 @@ describe('Selection logic: aggregation', () => {
     expect(agg.buildingCount).to.equal(2)
     expect(agg.heatingDemand).to.equal(28000)
     expect(agg.hotWaterDemand).to.equal(5500)
+  })
+
+  it('identifies a building by its EGID: several building_id with one EGID are one building', () => {
+    // Real case (Chalberzaunweg 11, Ringoldswil): two building_id, one GWR building
+    const agg = aggregateSurfaces(
+      [
+        surface({ featureId: 1, buildingId: 1053205, gwr_egid: 3185592, heatingDemand: 83164, hotWaterDemand: 8648 }),
+        surface({ featureId: 2, buildingId: 3002431, gwr_egid: 3185592, heatingDemand: 83105, hotWaterDemand: 8648 }),
+      ],
+      'roofs',
+    )
+    expect(agg.buildingCount).to.equal(1)
+    expect(agg.heatingDemand).to.equal(83164)
+    expect(agg.hotWaterDemand).to.equal(8648)
+
+    // Without EGID, fallback to building_id
+    const noEgid = aggregateSurfaces(
+      [
+        surface({ featureId: 1, buildingId: 100, gwr_egid: 0 }),
+        surface({ featureId: 2, buildingId: 200, gwr_egid: 0 }),
+      ],
+      'roofs',
+    )
+    expect(noEgid.buildingCount).to.equal(2)
   })
 
   it('classifies the average irradiation with the thresholds of each layer', () => {
@@ -158,15 +182,40 @@ describe('Selection logic: store', () => {
     expect(store.aggregated).to.equal(null)
   })
 
-  it('heat coverage is not capped at 100% and is null without demand', () => {
+  it('heat coverage is capped at 100% and is null without demand', () => {
     const store = useMapStore()
 
     store.addSurface(surface({ featureId: 1, heatYield: 30000, heatingDemand: 10000, hotWaterDemand: 5000 }))
-    // 30000 / 15000 = 200%
-    expect(store.summary?.heatCoveragePercent).to.equal(200)
+    // 30000 / 15000 = 200% -> capped: a building cannot use more heat than it needs
+    expect(store.summary?.heatCoveragePercent).to.equal(100)
 
     store.clearSelection()
-    store.addSurface(surface({ featureId: 2, heatYield: 30000 }))
+    store.addSurface(surface({ featureId: 2, heatYield: 6000, heatingDemand: 10000, hotWaterDemand: 5000 }))
+    // 6000 / 15000 = 40%
+    expect(store.summary?.heatCoveragePercent).to.equal(40)
+
+    store.clearSelection()
+    store.addSurface(surface({ featureId: 3, heatYield: 30000 }))
+    expect(store.summary?.heatCoveragePercent).to.equal(null)
+  })
+
+  it('heat coverage is kept for several surfaces of one building, not across buildings', () => {
+    const store = useMapStore()
+
+    // Two surfaces of the same building: one demand, the yields are summed against it.
+    store.addSurface(
+      surface({ featureId: 1, buildingId: 7, heatYield: 4000, heatingDemand: 10000, hotWaterDemand: 5000 }),
+    )
+    store.addSurface(
+      surface({ featureId: 2, buildingId: 7, heatYield: 3000, heatingDemand: 10000, hotWaterDemand: 5000 }),
+    )
+    // (4000 + 3000) / 15000 = 46.7% -> 47%
+    expect(store.summary?.heatCoveragePercent).to.equal(47)
+
+    // A surface of another building: a coverage ratio cannot be shared between buildings.
+    store.addSurface(
+      surface({ featureId: 3, buildingId: 8, gwr_egid: 8, heatYield: 3000, heatingDemand: 8000, hotWaterDemand: 2000 }),
+    )
     expect(store.summary?.heatCoveragePercent).to.equal(null)
   })
 })

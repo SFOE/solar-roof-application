@@ -72,13 +72,16 @@ views.
 | HTTP client           | Axios                           | Used for all swisstopo/VESE calls                          |
 | Build tool            | Vite                            | Dev server + production build; also hosts the dev-only VESE proxy middleware |
 | Linting               | oxlint + ESLint (`lint-check` = oxlint + eslint) | oxlint for fast correctness checks, ESLint for Vue/TS rules |
-| E2E / component tests | Cypress                         | `cypress/e2e` against a built app; component tests under `src/**/__tests__` |
+| E2E / component tests | Cypress                         | `cypress/e2e` against a built app; a component-test pattern (`src/**/__tests__`) is configured but no component test exists yet |
 
 ## Data sources
 
-- **Building geometries & solar suitability**: swissBUILDINGS3D 2.0 +
-  satellite-based irradiation data (2011–2020, MeteoSwiss), calculation model
-  by Meteotest AG on behalf of SFOE. Served live via the
+- **Building geometries & solar suitability**: swissBUILDINGS3D (3.0 Beta since
+  the 2026 update, 2.0 before) + satellite-based irradiation data (2015–2024,
+  MeteoSwiss),
+  calculation model by Meteotest AG on behalf of SFOE. The data are produced
+  outside this app (the Mage pipeline in `marmotini-mage-pipelines` publishes
+  them) and the app only reads them. Served live via the
   [geo.admin.ch SearchServer / MapServer `identify`/`find` APIs](https://api3.geo.admin.ch/rest/services/api/MapServer)
   on layers `ch.bfe.solarenergie-eignung-daecher` (roofs) and
   `ch.bfe.solarenergie-eignung-fassaden` (facades).
@@ -92,11 +95,16 @@ views.
 
 Structured spec work for this project lives under `.kiro/specs/<feature>/`
 (`requirements.md`, `design.md`, `tasks.md`), created via Kiro's spec
-workflow. There are no specs yet at the time this steering set was added —
-when a non-trivial feature is built, prefer going through spec mode so the
-decision record survives the chat session. See the `spec-mode-awareness`
-hook, which reminds the agent to check `.kiro/specs/` at the start of a chat
-session.
+workflow. Existing specs: `cypress-e2e-tests` (the E2E suite) and
+`selection-modes-refonte` (single/multi selection model). When a non-trivial
+feature is built, prefer going through spec mode so the decision record
+survives the chat session. See the `spec-mode-awareness` hook, which reminds
+the agent to check `.kiro/specs/` at the start of a chat session.
+
+The infrastructure (S3, CloudFront, WAF, Lambda, API Gateway, monitoring) is
+**not** in this repository: it lives in the separate OpenTofu repositories
+`prometheon-solar-roof-dev` and `prometheon-solar-roof-prod`, each with its own
+spec under `.kiro/specs/solar-roof-aws-infra/`.
 
 ## Key reference links
 

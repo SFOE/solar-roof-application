@@ -58,7 +58,17 @@ Only `MapComponent.vue` touches OpenLayers directly. If a new component
 needs to react to map state (selection, click coordinates, mode), go through
 `useMapStore()` rather than reaching into the `Map`/`View` instance from
 another component — `mapInstance` is a local `ref` inside
-`MapComponent.vue`, not exposed to siblings.
+`MapComponent.vue`, not exposed to siblings. The page drives the map only
+through the three exposed commands (`zoomTo`, `identifyAt`, `startNewSearch`,
+called by `SonnendachView.vue` on an address search).
+
+An address search always starts from scratch: `SonnendachView.vue` calls
+`startNewSearch()` before the map moves (selection, outlines, commune and
+postal code cleared, also in multi mode), so an old result is never shown next
+to the new address. When nothing is found, the "no data" panel is shown. In
+multi mode a map click that finds nothing keeps the selection being built.
+`InfoPanel.vue` shows the address next to its title only for a single
+surface: a selection of several surfaces may span several buildings.
 
 When adding a new overlay/layer to the map, follow the existing WMTS setup
 in `MapComponent.vue` (`createSwissWmtsSource`, the hand-built

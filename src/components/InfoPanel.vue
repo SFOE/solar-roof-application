@@ -33,7 +33,8 @@
       <span v-if="store.selectedSurfaces.length > 1" class="title-count">
         ({{ agg.surfaceCount }} {{ $t('info_surfaces') }})
       </span>
-      <span v-if="store.selectedAddress" class="title-address"> — {{ store.selectedAddress }}</span>
+      <!-- Address only for a single surface: a multiple selection may span several buildings -->
+      <span v-if="store.selectedAddress && agg.isSingleSurface" class="title-address"> — {{ store.selectedAddress }}</span>
     </h3>
 
     <div class="info-grid">
@@ -128,9 +129,10 @@
           <span class="info-label">{{ $t('info_hot_water_demand') }}</span>
           <span class="info-value">{{ fmt(agg.hotWaterDemand) }} kWh/{{ $t('info_year') }}</span>
         </div>
-        <div v-if="store.summary && store.summary.heatCoveragePercent !== null" class="info-row">
+        <!-- Always shown; "-" when it cannot be stated (several buildings, or no known demand) -->
+        <div class="info-row">
           <span class="info-label">{{ $t('info_heat_coverage') }}</span>
-          <span class="info-value">{{ store.summary.heatCoveragePercent }}%</span>
+          <span class="info-value heat-coverage">{{ heatCoverageValue }}</span>
         </div>
         <div class="info-row">
           <span class="info-label">{{ $t('info_collector_area') }}</span>
@@ -189,6 +191,12 @@ watch(
   },
   { immediate: true },
 )
+
+/** Heat coverage as "42%", or "-" when it cannot be stated (see heatCoverage() in mapStore). */
+const heatCoverageValue = computed(() => {
+  const p = store.summary?.heatCoveragePercent
+  return p === null || p === undefined ? '-' : `${p}%`
+})
 
 /** Returns the distribution percentage for a given class (1..5). */
 function distributionValue(c: number): number {

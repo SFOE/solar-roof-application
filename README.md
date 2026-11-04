@@ -32,8 +32,8 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 
 ### Data sources
 
-- **Building geometries**: swissBUILDINGS3D 2.0 (swisstopo)
-- **Solar irradiation**: Satellite-based data 2011–2020 (MeteoSwiss)
+- **Building geometries**: swissBUILDINGS3D 3.0 Beta since the 2026 update, 2.0 before (swisstopo)
+- **Solar irradiation**: Satellite-based data 2015–2024 (MeteoSwiss)
 - **Calculation model**: Meteotest AG on behalf of SFOE
 - **Building register**: GWR (Federal Statistical Office)
 - **PV feed-in tariffs**: [VESE PvTarif API](https://www.vese.ch/pvtarif/) — tariff data per energy provider and municipality
