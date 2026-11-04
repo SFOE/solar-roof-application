@@ -58,15 +58,35 @@ function veseProxyPlugin(): Plugin {
 }
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
     vue(),
-    vueDevTools(),
+    // Dev-only: avoids bundling the devtools client (and its hookable/birpc/
+    // @vue/devtools-shared deps) into the production build.
+    mode === 'development' ? vueDevTools() : undefined,
     veseProxyPlugin(),
-  ],
+  ].filter(Boolean),
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
-})
+  build: {
+    sourcemap: false,
+    rolldownOptions: {
+      output: {
+        // OpenLayers rarely changes between deploys of this app's own code, so
+        // splitting it into its own chunk lets browsers reuse the cached chunk
+        // across app updates instead of re-downloading it with every change.
+        codeSplitting: {
+          groups: [
+            {
+              name: 'ol',
+              test: /node_modules\/ol/,
+            },
+          ],
+        },
+      },
+    },
+  },
+}))

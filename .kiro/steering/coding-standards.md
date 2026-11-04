@@ -111,3 +111,42 @@ The Lambda proxy URL differs between dev and prod and is supplied via
 `VITE_PVTARIF_API_URL` (`.env.production` / `.env.prod`, selected by Vite
 `--mode`), not hardcoded in `usePvTarif.ts`. Keep following this pattern for
 any new environment-specific endpoint.
+
+## DRY: colors and shared logic
+
+- All brand/UI colors used in a component's `<style>` block must reference
+  the CSS custom properties defined in `src/assets/base.css`
+  (`--color-primary`, `--color-accent`, `--color-link`, `--color-text`,
+  `--color-muted`, `--color-border`, `--color-border-light`) — don't repeat
+  a raw hex value in a component's `<style>` block.
+- The suitability-class (1–5) color scale lives in two places that must stay
+  in sync: the `--suitability-1..5` CSS custom properties in `base.css` for
+  styling in templates/CSS, and `SUITABILITY_COLORS`/`suitabilityColor()` in
+  `src/composables/useSuitabilityColor.ts` for JS-driven styling (inline
+  `:style` bindings, computed colors). Import the composable instead of
+  redefining a local color map in a component.
+- Code that cannot read CSS custom properties (e.g. OpenLayers `Style`
+  objects, which are plain JS, not DOM-rendered) may duplicate a hex value,
+  but must document which CSS variable it mirrors in a comment next to it
+  (see the selection outline color in `MapComponent.vue`).
+- Extract logic used by more than one component into `src/composables/`
+  rather than duplicating it (e.g. `useSuitabilityColor`, `useProjections`,
+  `useSolarIdentify`, `usePvTarif`).
+- Import static assets (`import logo from '@/assets/logo.png'`) and bind
+  them (`:src`, `:srcset`) instead of referencing a path as a string in the
+  template — a plain string in most template attributes is not rewritten by
+  Vite's asset-URL transform (it only covers a known attribute list, e.g.
+  `img[src]`) and will 404 in production. This previously broke the
+  responsive logo `<picture>`/`<source>` markup in `HeaderComponent.vue`.
+- Pair resource-acquiring `onMounted` logic with a matching `onUnmounted`
+  cleanup (e.g. releasing an OpenLayers map's render target) so component
+  teardown and HMR reloads during development don't leak instances.
+- Never bind untrusted or remote API data with `v-html` without sanitizing
+  it first. If a response may legitimately contain a small whitelist of
+  formatting tags (e.g. `<b>` highlighting from a search API), escape all
+  HTML first, then selectively re-allow only that whitelist — see
+  `sanitizeLabel()` in `SearchBar.vue`.
+- Interactive disclosure widgets (e.g. the FAQ accordion) need
+  `aria-controls`/`aria-labelledby` linking the trigger and the region it
+  reveals, and decorative glyphs made of text (like `+`/`−` icons) need
+  `aria-hidden="true"`.

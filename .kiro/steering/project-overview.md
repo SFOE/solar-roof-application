@@ -38,7 +38,9 @@ things that *are* specific to this app:
 src/
   components/      ← Vue SFCs (Map, SearchBar, InfoPanel, SummaryBanner, ModeToggle,
                        SelectionModeToggle, FaqSection, Header, Footer, LanguageSwitcher)
-  composables/      ← useProjections, useSolarIdentify, usePvTarif — all swisstopo/VESE API logic
+  composables/      ← useProjections, useSolarIdentify, usePvTarif (swisstopo/VESE API logic),
+                       useSuitabilityColor (shared suitability-class color scale, mirrors
+                       base.css's --suitability-1..5)
   stores/           ← Pinia stores: mapStore (selection + derived data), languageStore
   types/            ← solar.ts — the shared data model (SurfaceData, AggregatedData, SummaryData)
   locales/          ← de.json (default), fr.json, it.json, en.json

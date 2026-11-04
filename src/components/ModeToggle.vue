@@ -53,7 +53,7 @@ const sliderOffset = computed(() => {
   bottom: 2px;
   left: 2px;
   width: calc((100% - 4px) / 2);
-  background: #d32f2f;
+  background: var(--color-accent);
   border-radius: 4px;
   transition: transform 0.3s ease;
   z-index: 0;

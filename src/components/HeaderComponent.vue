@@ -9,7 +9,16 @@
     <div class="bottom-header-box">
       <div class="app-container bottom-header-inner">
         <div class="logo-title-group">
-          <img class="logo responsive-logo" alt="Swiss Confederation Logo" />
+          <picture>
+            <source media="(max-width: 768px)" :srcset="swissMobileLogo" />
+            <img
+              class="logo"
+              :src="confederationLogo"
+              alt="Swiss Confederation Logo"
+              width="459"
+              height="115"
+            />
+          </picture>
           <div class="divider"></div>
           <h1 class="title">{{ $t('header_title') }}</h1>
         </div>
@@ -22,6 +31,12 @@
 
 <script setup lang="ts">
 import LanguageSwitcherComponent from './LanguageSwitcherComponent.vue'
+// Explicit imports (rather than string paths in the template) so Vite always
+// resolves and bundles both assets — the <source srcset> attribute is not in
+// Vite/Vue's default template asset-URL transform list, so a plain string
+// path there is not rewritten and would 404 in production.
+import confederationLogo from '@/assets/logo.png'
+import swissMobileLogo from '@/assets/swiss_mobile.svg'
 </script>
 
 <style scoped>
@@ -35,7 +50,7 @@ import LanguageSwitcherComponent from './LanguageSwitcherComponent.vue'
 .top-header-box {
   width: 100%;
   height: 50px;
-  background-color: #2f4356;
+  background-color: var(--color-primary);
   display: flex;
   align-items: center;
 }
@@ -71,11 +86,6 @@ import LanguageSwitcherComponent from './LanguageSwitcherComponent.vue'
   flex-shrink: 0;
 }
 
-/* Sur desktop : logo complet de la Confédération */
-.responsive-logo {
-  content: url('@/assets/logo.png');
-}
-
 .title {
   margin: 0;
   font-size: 16px;
@@ -93,10 +103,9 @@ import LanguageSwitcherComponent from './LanguageSwitcherComponent.vue'
   background-color: #dcdcdc;
 }
 
-/* Sur mobile : logo compact (croix suisse seule) */
+/* Sur mobile : logo compact (croix suisse seule), chargé via la balise <source> du <picture> */
 @media (max-width: 768px) {
-  .responsive-logo {
-    content: url('@/assets/swiss_mobile.svg');
+  .logo {
     height: 20px;
     padding-left: 10px;
   }

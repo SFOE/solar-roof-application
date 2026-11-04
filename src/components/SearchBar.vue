@@ -105,6 +105,25 @@ function onInput() {
 }
 
 /**
+ * Échappe tout le HTML d'un libellé renvoyé par l'API SearchServer, puis
+ * ré-autorise uniquement les balises <b>/</b> que l'API utilise pour mettre
+ * en évidence le texte recherché.
+ *
+ * Le libellé est affiché via v-html (voir le template) : sans cet
+ * échappement, une réponse altérée ou mal formée pourrait injecter des
+ * balises/attributs arbitraires (ex. <img onerror=...>) dans la page. On ne
+ * fait pas confiance à du HTML distant, même venant d'une API gouvernementale
+ * de confiance — défense en profondeur.
+ */
+function sanitizeLabel(label: string): string {
+  const escaped = label
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+  return escaped.replace(/&lt;b&gt;/g, '<b>').replace(/&lt;\/b&gt;/g, '</b>')
+}
+
+/**
  * Appelle l'API swisstopo SearchServer.
  */
 async function search(text: string) {
@@ -123,7 +142,7 @@ async function search(text: string) {
 
     results.value = response.data.results.map((r: any) => ({
       id: r.id,
-      label: r.attrs.label,
+      label: sanitizeLabel(r.attrs.label),
       east: r.attrs.y,   // y = Est en LV95 (convention swisstopo)
       north: r.attrs.x,  // x = Nord en LV95
     }))
@@ -214,7 +233,7 @@ function onBlur() {
 }
 
 .search-input:focus {
-  border-color: #d32f2f;
+  border-color: var(--color-accent);
 }
 
 .search-input::placeholder {

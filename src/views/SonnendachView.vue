@@ -63,7 +63,7 @@ watch(
 
 <template>
   <HeaderComponent />
-  <div class="app-container">
+  <main class="app-container">
     <h2 class="page-title">{{ $t('main_title') }}</h2>
     <SearchBar @select="onAddressSelect" />
     <div ref="mapSection">
@@ -79,7 +79,7 @@ watch(
     <p class="app-description" v-html="$t('app_description')"></p>
 
     <FaqSection />
-  </div>
+  </main>
   <FooterComponent />
 </template>
 
@@ -102,7 +102,7 @@ watch(
 }
 
 .app-description :deep(a) {
-  color: #1565c0;
+  color: var(--color-link);
   text-decoration: none;
   font-weight: 600;
 }

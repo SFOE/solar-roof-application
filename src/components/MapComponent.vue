@@ -28,7 +28,9 @@
           @click="switchBasemap(bm.id)"
           :title="$t(bm.labelKey)"
         >
-          <img :src="bm.thumbnail" :alt="$t(bm.labelKey)" />
+          <!-- Decorative: the visible label right below already gives the button its
+               accessible name, so an alt here would just duplicate it for screen readers. -->
+          <img :src="bm.thumbnail" alt="" width="70" height="50" />
           <span class="basemap-label">{{ $t(bm.labelKey) }}</span>
         </button>
       </template>
@@ -37,10 +39,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useProjections } from '@/composables/useProjections'
 import { useMapStore } from '@/stores/mapStore'
 import { useSolarIdentify } from '@/composables/useSolarIdentify'
+
+// OpenLayers' own stylesheet — required for its default controls (zoom +/-, rotate,
+// attribution) to render styled instead of as bare unstyled buttons/divs.
+import 'ol/ol.css'
 
 import Map from 'ol/Map'
 import View from 'ol/View'
@@ -52,7 +58,7 @@ import WMTSTileGrid from 'ol/tilegrid/WMTS'
 import type Feature from 'ol/Feature'
 import { Stroke, Style } from 'ol/style'
 import { getCenter } from 'ol/extent'
-import { ScaleLine } from 'ol/control'
+import { ScaleLine, defaults as defaultControls } from 'ol/control'
 import type { MapBrowserEvent } from 'ol'
 
 const mapContainer = ref<HTMLDivElement>()
@@ -118,6 +124,8 @@ let solarLayer: TileLayer | null = null
 
 // Vector layer for selection highlight — CONTOUR ONLY (no fill), to preserve suitability colors.
 // Double stroke: light halo underneath + colored outline on top for contrast.
+// '#d32f2f' mirrors --color-accent in src/assets/base.css. OpenLayers styles are plain JS and
+// can't read CSS custom properties directly, so this value is duplicated — keep both in sync.
 const outlineSource = new VectorSource()
 const outlineLayer = new VectorLayer({
   source: outlineSource,
@@ -283,6 +291,9 @@ onMounted(() => {
   const map = new Map({
     target: mapContainer.value,
     layers: [basemapLayer, solarLayer, outlineLayer],
+    // Keep the default zoom/rotate controls, but drop OL's own attribution control: the
+    // i18n-aware ".map-attribution" bar in the template already covers that.
+    controls: defaultControls({ attribution: false }),
     view: new View({
       projection,
       center: swissCenter,
@@ -302,11 +313,23 @@ onMounted(() => {
 
   mapInstance.value = map
 })
+
+// Release the map's DOM/canvas and rendering context. There is only one route
+// in this app so this rarely runs today, but it's the documented OpenLayers
+// cleanup step and keeps HMR component reloads during development from
+// accumulating detached map instances.
+onUnmounted(() => {
+  mapInstance.value?.setTarget(undefined)
+  mapInstance.value = undefined
+})
 </script>
 
 <style scoped>
 .map-container {
   position: relative;
+  /* Was the map-wrapper's bottom margin; moved here so it doesn't throw off
+     the bottom-edge alignment of the overlays below (see note there). */
+  margin-bottom: 0.5rem;
 }
 
 .map-wrapper {
@@ -315,24 +338,43 @@ onMounted(() => {
   border: 1px solid #ccc;
   border-radius: 4px;
   overflow: hidden;
-  margin: 0.5rem 0;
+  margin-top: 0.5rem;
 }
 
+/* OL's scale line is positioned relative to .map-wrapper's own box, while
+   the attribution bar and basemap switcher below are positioned relative to
+   .map-container. With no bottom margin on .map-wrapper (moved to
+   .map-container above), both boxes share the same bottom edge, so the same
+   "bottom" value lines all three up. 20px matches .ol-scale-line's natural
+   rendered height, so the attribution bar comes out the same height too. */
 .map-attribution {
   position: absolute;
-  bottom: 6px;
-  left: 8px;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
   font-size: 0.65rem;
   color: #333;
   background: rgba(255, 255, 255, 0.7);
-  padding: 1px 6px;
+  padding: 0 6px;
   border-radius: 3px;
   z-index: 10;
+  white-space: nowrap;
+}
+
+:deep(.ol-scale-line) {
+  height: 20px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
 }
 
 .basemap-switcher {
   position: absolute;
-  bottom: 30px;
+  bottom: 8px;
   right: 12px;
   display: flex;
   gap: 6px;
@@ -345,9 +387,9 @@ onMounted(() => {
   right: 12px;
   padding: 3px 8px;
   border-radius: 3px;
-  border: 1px solid #d32f2f;
+  border: 1px solid var(--color-accent);
   background: rgba(255, 255, 255, 0.8);
-  color: #d32f2f;
+  color: var(--color-accent);
   font-size: 0.7rem;
   font-weight: 400;
   cursor: pointer;
@@ -356,7 +398,7 @@ onMounted(() => {
 }
 
 .clear-selection-btn:hover {
-  background: #d32f2f;
+  background: var(--color-accent);
   color: #fff;
 }
 
