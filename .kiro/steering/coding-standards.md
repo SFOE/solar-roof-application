@@ -37,15 +37,18 @@
 Observed consistently across `src/components/*.vue` — follow them for new
 components:
 
-- A short HTML comment block at the top of the `<template>` naming the
-  component and summarizing its responsibility in 2-4 lines (see
+- A short HTML comment block at the very top of the file (before `<template>`)
+  naming the component and summarizing its responsibility in 2-4 lines (see
   `MapComponent.vue`, `InfoPanel.vue`, `SelectionModeToggle.vue` for the
   pattern). This is the de-facto doc-comment convention for this codebase —
   there are no JSDoc blocks on components.
 - `<script setup lang="ts">` imports composables/stores and exposes only
-  what the template needs via plain `const` bindings — no explicit
-  `defineExpose`/`defineProps` unless the component genuinely takes
-  props (most don't; they read directly from `useMapStore()`).
+  what the template needs via plain `const` bindings. Most components read
+  directly from `useMapStore()` and declare no props. The existing exceptions
+  are deliberate: `MapComponent.vue` uses `defineExpose` so the page can drive
+  the map (`zoomTo`, `identifyAt`, `startNewSearch`), and `SearchBar.vue` uses
+  `defineEmits` to hand the chosen address to the page. Use these only for a
+  parent-to-child command or a child-to-parent event, not to pass shared state.
   See `component-development.md` for the store-as-shared-state pattern.
 - Scoped `<style scoped>` blocks per component; no CSS framework, no
   CSS-in-JS. Shared tokens live in `src/assets/base.css` / `main.css`.
@@ -55,9 +58,10 @@ components:
 
 ## Comment language
 
-Most files are commented in English. `src/types/solar.ts` currently has its
-file-level doc comment and some field comments in French — this is pre-existing
-and not a convention to copy forward. Write new comments in English unless
+Most files are commented in English. Some files still carry French comments
+(`src/types/solar.ts`, `src/components/SearchBar.vue`,
+`src/views/SonnendachView.vue`) — this is pre-existing and not a convention to
+copy forward. Write new comments in English unless
 you're editing a block that is already in French and keeping consistency
 with the immediate surrounding text matters more than switching languages
 mid-file.

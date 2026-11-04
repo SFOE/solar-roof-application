@@ -63,18 +63,23 @@ regardless of which `.env*` file it came from.
   checked for reuse — pick a tag that hasn't been used.
 - **Dependabot** (`dependabot.yml` + `dependabot-automerge.yml`) — monthly
   grouped PR for npm deps + GitHub Actions. Every Dependabot PR (including
-  majors) auto-merges once its required checks pass, since `main` only
-  auto-deploys to **dev**. Before the first prod deployment, tighten
-  auto-merge back to patch/minor. `main` requires `lint-test-build.yml` and
-  `check-backend.yml` as passing status checks for this to actually gate
-  anything.
+  majors) is set to auto-merge, since `main` only auto-deploys to **dev**.
+  Before the first prod deployment, tighten auto-merge back to patch/minor.
+  **Caveat:** auto-merge only waits for checks that are marked *required* in
+  the branch rules of `main` (`Lint, Test & Build`, `Check backend`). The
+  repository is private on the GitHub Free organisation plan, where branch
+  protection rules and rulesets are **not enforced** — so today nothing
+  technically blocks a failing Dependabot PR from merging. Don't describe
+  `main` as protected until the repository is public or the plan is upgraded.
 
 ## Deploying to prod (manual, two repos)
 
 1. Run `package-and-push-backend.yml` with `environment: prod` and a new
    version tag (e.g. `v1.2.0`).
-2. In the **infrastructure repo**, set that tag as `source_code_version` in
-   `deploy.auto.tfvars.json` for prod and push.
+2. In the **prod infrastructure repo** (`prometheon-solar-roof-prod`), set that
+   tag as `source_code_version` in `deploy.auto.tfvars.json`, on a branch, and
+   open a PR. Its pipeline plans on the PR and applies when the PR is merged to
+   `main` (the dev repo `prometheon-solar-roof-dev` works the same way).
 3. Run `package-and-deploy-frontend.yml` with `environment: prod`.
 
 Never skip step 2 when releasing a backend change — the frontend deploy only

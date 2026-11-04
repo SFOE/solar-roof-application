@@ -36,15 +36,41 @@ function classifyIrradiation(avg: number, mode: SolarMode): number {
   return 1
 }
 
+/** Maximum heat coverage: a building cannot use more heat than its demand. */
+const MAX_HEAT_COVERAGE_PERCENT = 100
+
+/**
+ * Share of the building's heat demand (heating + hot water) covered by the solar-thermal yield,
+ * in %, or null when it cannot be stated (shown as "-").
+ *
+ * - Only for surfaces of a single building: a coverage is a ratio to one building's demand, and
+ *   the thermal values cannot be shared between buildings. Several surfaces of the same
+ *   building are allowed (their yields are summed against that building's demand).
+ * - Capped at 100%: the yield counts useful heat, and a building cannot use more than it needs.
+ *   Each surface's yield is sized as if it were the building's only installation (Sonnendach
+ *   report, chapter 7.5), so for several surfaces of one building the figure is an upper bound.
+ * - Null without a known demand.
+ */
+function heatCoverage(agg: AggregatedData, demand: number): number | null {
+  if (agg.buildingCount !== 1 || demand <= 0) return null
+  return Math.min(MAX_HEAT_COVERAGE_PERCENT, Math.round((agg.heatYield / demand) * 100))
+}
+
 /** Percentage of `part` over `total`, rounded, 0 if total is 0. */
 function pct(part: number, total: number): number {
   return total > 0 ? Math.round((part / total) * 100) : 0
 }
 
+/** Building identity for heat demand: GWR EGID when known, else the Sonnendach building_id. */
+function buildingKey(s: SurfaceData): string {
+  const egid = Number(s.gwr_egid)
+  return egid > 0 ? `egid:${egid}` : `bid:${s.buildingId}`
+}
+
 /**
  * Aggregates a set of surfaces into a single data object for display.
  * Additive quantities are summed; irradiation/m² is area-weighted.
- * Heat demand is deduplicated by buildingId (a building's demand is counted once).
+ * Heat demand is deduplicated by building (EGID, fallback buildingId): counted once per building.
  */
 export function aggregateSurfaces(surfaces: SurfaceData[], mode: SolarMode): AggregatedData {
   let area = 0
@@ -75,11 +101,14 @@ export function aggregateSurfaces(surfaces: SurfaceData[], mode: SolarMode): Agg
     }
   }
 
-  // Heat demand deduplicated by building (demand is a per-building value repeated on each surface)
-  const seenBuildings = new Map<number, { heating: number; water: number }>()
+  // Heat demand deduplicated by building (demand is a per-building value repeated on each surface).
+  // The demand comes from the GWR, so a building is identified by its EGID: one GWR building can
+  // span several Sonnendach building_id (building parts). Fallback to building_id without EGID.
+  const seenBuildings = new Map<string, { heating: number; water: number }>()
   for (const s of surfaces) {
-    if (!seenBuildings.has(s.buildingId)) {
-      seenBuildings.set(s.buildingId, {
+    const key = buildingKey(s)
+    if (!seenBuildings.has(key)) {
+      seenBuildings.set(key, {
         heating: s.heatingDemand || 0,
         water: s.hotWaterDemand || 0,
       })
@@ -169,9 +198,7 @@ export const useMapStore = defineStore('map', () => {
     return {
       suitabilityClass: agg.suitabilityClass,
       financialReturn: agg.financialReturn,
-      // Not capped: a value > 100% means the surface could produce more heat
-      // than the building needs.
-      heatCoveragePercent: denom > 0 ? Math.round((agg.heatYield / denom) * 100) : null,
+      heatCoveragePercent: heatCoverage(agg, denom),
     }
   })
 
