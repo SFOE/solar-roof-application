@@ -2,12 +2,12 @@ name: Package and Deploy Frontend
 
 # FRONTEND only (the VESE proxy Lambda has its own manual workflow: package-and-push-backend.yml).
 #
-# On every push to main (this includes merged Dependabot updates, which keeps the libraries
-# maintained): lint, type-check, build and E2E tests run first (lint-test-build.yml). Only if
+# On every push to main: lint, type-check, build and E2E tests run first (lint-test-build.yml). Only if
 # they pass, the site is built, then deployed to dev (S3 sync + CloudFront invalidation).
 #
 # Manual run (workflow_dispatch): same pipeline, with a choice of environment (dev or prod).
-# Use it for prod, which is never deployed automatically. The build uses the API URL of the
+# Use it for prod, which is never deployed automatically. The Dependabot batch merge also starts
+# it this way (environment dev), because its merges do not trigger the push event. The build uses the API URL of the
 # chosen environment (.env.production for dev, .env.prod for prod).
 # AWS secrets: SFOE_SOLAR_ROOF_PIPELINE_ROLE_<ENV> and SFOE_SOLAR_ROOF_CLOUDFRONT_<ENV>.
 #

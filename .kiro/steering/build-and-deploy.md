@@ -49,7 +49,7 @@ regardless of which `.env*` file it came from.
   be a required check; the backend package pipeline runs it first. No tests
   (none exist yet for the Lambda), no AWS access.
 - **`package-and-deploy-frontend.yml`** — automatic on every push to `main`
-  (including merged Dependabot PRs). Runs `lint-test-build.yml` first; only on
+  (Dependabot batches start it by `workflow_dispatch` instead). Runs `lint-test-build.yml` first; only on
   success does it build and deploy to **dev** (S3 sync + CloudFront
   invalidation). A manual run can target `dev` or `prod` — `prod` is **never**
   deployed automatically. The env selects which `.env.*` file bakes into the
@@ -61,16 +61,20 @@ regardless of which `.env*` file it came from.
   `deploy.auto.tfvars.json` in the infrastructure repo and pushing there.
   Tags must be explicit (no `latest`, no unusual characters) and are not
   checked for reuse — pick a tag that hasn't been used.
-- **Dependabot** (`dependabot.yml` + `dependabot-automerge.yml`) — monthly
-  grouped PR for npm deps + GitHub Actions. Every Dependabot PR (including
-  majors) is set to auto-merge, since `main` only auto-deploys to **dev**.
-  Before the first prod deployment, tighten auto-merge back to patch/minor.
-  **Caveat:** auto-merge only waits for checks that are marked *required* in
-  the branch rules of `main` (`Lint, Test & Build`, `Check backend`). The
-  repository is private on the GitHub Free organisation plan, where branch
-  protection rules and rulesets are **not enforced** — so today nothing
-  technically blocks a failing Dependabot PR from merging. Don't describe
-  `main` as protected until the repository is public or the plan is upgraded.
+- **Dependabot** (`dependabot.yml` + `dependabot-automerge.yml`) — monthly,
+  one grouped PR for npm deps and one for GitHub Actions, with a 3-day
+  `cooldown` (only versions released ≥ 3 days ago; security updates are not
+  delayed). PRs are **not** merged as they arrive: the "Dependabot batch
+  merge" workflow runs every 3 days (cron `0 6 */3 * *`, or manually), merges
+  every open Dependabot PR whose checks are green (`gh pr checks`), majors
+  included, then starts **one** dev deployment via `workflow_dispatch`
+  (a merge made with `GITHUB_TOKEN` does not trigger the push workflow).
+  PRs with a failing or running check are skipped. Before relying on this
+  for prod, tighten it back to patch/minor.
+  **Caveat:** the repository is private on the GitHub Free organisation plan,
+  where branch protection rules and rulesets are **not enforced**, which is
+  why the workflow checks the results itself. Don't describe `main` as
+  protected until the repository is public or the plan is upgraded.
 
 ## Deploying to prod (manual, two repos)
 

@@ -1,31 +1,69 @@
-name: Dependabot auto-merge
+name: Dependabot batch merge
 
-# Merges EVERY Dependabot pull request (patch, minor and major) once its checks are green.
+# Every 3 days (and on demand), merges ALL open Dependabot pull requests whose checks are green,
+# then deploys dev once. Pull requests are not merged one by one as they arrive: their checks
+# still run on their own (Lint, Test & Build, Check backend), the merge waits for the next batch.
 #
-# Why this is acceptable: `main` is the dev line. A merge to main deploys to dev only; prod is
-# never deployed automatically (manual run of package-and-deploy-frontend.yml). Before the first
-# prod deployment, restrict this workflow again to patch and minor updates (see
-# dependabot/fetch-metadata, output `update-type`).
+# Why merging majors too is acceptable: `main` is the dev line. Prod is never deployed
+# automatically (manual run of package-and-deploy-frontend.yml). Before relying on this for prod,
+# restrict it again to patch and minor updates.
 #
-# `--auto` does not merge at once: GitHub merges when the REQUIRED checks pass. Mark
-# "Lint, Test & Build" and "Check backend" as required in the branch rules of main, otherwise
-# nothing is checked.
-# A failing update (for example a major version) stays open and must be handled by hand.
-# Dependabot groups all npm updates in one pull request, so one failing update blocks the others.
+# The checks are verified here (`gh pr checks`), because branch protection is not enforced on
+# this private repository (GitHub Free plan). A pull request with a failing or still running
+# check is skipped and stays open: a failing one must be handled by hand.
+#
+# A merge done with GITHUB_TOKEN does not start the push workflows (GitHub rule), so the dev
+# deployment is started explicitly, once per batch (workflow_dispatch is allowed with the token).
+#
+# Security updates are opened by Dependabot at once (the cooldown does not apply to them) and are
+# merged at the next batch, at most 3 days later. Merge one by hand if it cannot wait.
+#
+# Note: "*/3" restarts on the 1st of each month, so the gap is 1 to 3 days at a month change.
 
-on: pull_request
+on:
+  schedule:
+    - cron: "0 6 */3 * *" # 06:00 UTC
+  workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
+  actions: write # start the dev deployment
+  checks: read
+
+# Never two batches at the same time
+concurrency:
+  group: dependabot-batch-merge
+  cancel-in-progress: false
 
 jobs:
-  dependabot:
+  merge:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
     steps:
-      - name: Auto-merge when the checks pass
-        run: gh pr merge --auto --squash "$PR_URL"
-        env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Merge the Dependabot pull requests with green checks
+        id: merge
+        run: |
+          prs=$(gh pr list --author "app/dependabot" --state open --json number --jq '.[].number')
+          merged=0
+          for pr in $prs; do
+            # Non-zero exit when a check failed or is still running
+            if gh pr checks "$pr" > /dev/null 2>&1; then
+              if gh pr merge "$pr" --squash; then
+                echo "#$pr merged"
+                merged=$((merged + 1))
+              else
+                echo "::warning::#$pr could not be merged (conflict?), Dependabot will rebase it for the next batch"
+              fi
+            else
+              echo "::warning::#$pr skipped: a check failed or is still running"
+            fi
+          done
+          echo "Merged: $merged"
+          echo "merged=$merged" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy dev once for the whole batch
+        if: steps.merge.outputs.merged != '0'
+        run: gh workflow run package-and-deploy-frontend.yml --ref main -f environment=dev
