@@ -1,4 +1,4 @@
-﻿{
+{
   "page_title": "Tettosolare.ch: Quanta elettricità e calore può produrre il mio tetto?",
   "header_title": "Ufficio federale dell'energia UFE",
   "language_label": "Lingua",
@@ -61,7 +61,7 @@
   "info_collector_area": "Superficie dei collettori",
   "info_storage": "Volume di accumulo",
   "info_faq_text": "Il vostro edificio non è rappresentato? Domande sui dati?",
-  "info_solar_calculator_text": "Simulate il vostro progetto solare con il",
+  "info_solar_calculator_text": "Per andare oltre, simulate il vostro progetto solare con il",
   "info_solar_calculator_link": "calcolatore SvizzeraEnergia",
   "info_solar_calculator_url": "https://www.svizzeraenergia.ch/tools/calcolatore-solare/",
   "info_faq_link": "Consultate le nostre FAQ",
@@ -81,6 +81,8 @@
   "faq_a7": "<p>Gli indirizzi visualizzati provengono dal Registro federale degli edifici e delle abitazioni (REA). Questo registro non copre tutte le costruzioni: annessi, edifici agricoli, garage o costruzioni non abitate spesso non vi figurano. In questi casi, il potenziale solare viene visualizzato ma senza un indirizzo associato.</p>",
   "faq_q8": "Dati e codice sorgente",
   "faq_a8": "<p><strong>Dati:</strong> I dati sono pubblicati come Open Government Data (OGD) e possono essere riutilizzati liberamente, anche a fini commerciali, a condizione di indicare la fonte del set di dati (autore, titolo e link al set di dati).</p><p>Download: <a href='https://opendata.swiss/it/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie' target='_blank'>opendata.swiss ↗</a> · <a href='https://www.geocat.ch/geonetwork/srv/ita/catalog.search#/metadata/b614de5c-2f12-4355-b2c9-7aef2c363ad6' target='_blank'>geocat.ch ↗</a></p><p><strong>Visualizzazione:</strong> I dati possono essere consultati anche su <a href='https://map.geo.admin.ch/?layers=ch.bfe.solarenergie-eignung-daecher' target='_blank'>map.geo.admin.ch ↗</a>, dove ogni singola superficie di tetto e facciata può essere visualizzata individualmente.</p><p><strong>Codice sorgente:</strong> Il codice di questa applicazione è disponibile con licenza MIT e può essere riutilizzato liberamente. Il repository è accessibile su <a href='https://github.com/SFOE/solar-roof-application' target='_blank'>GitHub ↗</a>.</p>",
+  "faq_q11": "Come viene stimato il fabbisogno di calore?",
+  "faq_a11": "<p>Il fabbisogno di calore non viene misurato, ma stimato sulla base dei dati del Registro federale degli edifici e delle abitazioni (REA), ossia l'etÃ  dell'edificio, la sua destinazione d'uso e la superficie delle abitazioni. Tali informazioni sono messe a confronto con valori tipici della norma SIA 2024 e adattate al clima locale.</p><p>Si tratta di una media per edifici comparabili: il fabbisogno effettivo del vostro edificio puÃ² discostarsene, in particolare dopo una ristrutturazione. In assenza di una corrispondenza nel REA, il potenziale solare termico non viene calcolato. Per maggiori informazioni, potete consultare la <a href='https://www.bfe.admin.ch/it/tettosolare' target='_blank'>documentazione tecnica â†—</a>.</p>",
   "faq_q9": "La geometria dell'edificio sembra non corretta – perché?",
   "faq_a9": "<p>Le stime si basano su un modello 3D su larga scala (swissBUILDINGS3D) che copre l'intera Svizzera. Per geometrie di tetti complesse (tetti a più falde, abbaini, forme irregolari), sono possibili discrepanze tra il modello e la realtà. Queste imprecisioni possono influenzare le stime di produzione solare.</p><p>Se la geometria del vostro edificio vi sembra incorretta, vi consigliamo di utilizzare il <a href='https://www.svizzeraenergia.ch/tools/calcolatore-solare/' target='_blank'>calcolatore solare di SvizzeraEnergia ↗</a> per una stima manuale adattata alla vostra situazione.</p>",
   "faq_q10": "Come utilizzare l'applicazione?",

@@ -17,6 +17,7 @@ This project is built on behalf of the Swiss Federal Office of Energy (SFOE). Th
 - Basemap switcher (satellite / grey map)
 - Address search with autocomplete via the [geo.admin.ch SearchServer API](https://api3.geo.admin.ch/rest/services/api/SearchServer)
 - Outline highlighting of the selected surfaces
+- Zoom buttons (+ / −, stacked) without scale line
 - **Single selection mode** (default) — each click shows the data of one roof or facade surface
 - **Multiple selection mode** — click multiple surfaces to see aggregated totals across your selection
 - PV and solar thermal production estimates based on the [solar suitability dataset](https://opendata.swiss/en/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie)

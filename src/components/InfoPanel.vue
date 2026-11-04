@@ -179,11 +179,13 @@ const tarifValue = computed(() => {
   return `${tarifData.value[0].energy1} cts/kWh`
 })
 
-// Fetch tariff when commune changes
+// Fetch tariff when commune changes. Without a commune (new search, building without GWR
+// match) the previous tariff is cleared so it is never shown for another building.
 watch(
   () => store.communeId,
   (newId) => {
     if (newId) fetchTarif(newId)
+    else tarifData.value = []
   },
   { immediate: true },
 )

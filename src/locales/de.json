@@ -1,4 +1,4 @@
-﻿{
+{
   "page_title": "Sonnendach.ch: Wie viel Strom und Wärme kann mein Dach produzieren?",
   "header_title": "Bundesamt für Energie BFE",
   "language_label": "Sprache",
@@ -61,7 +61,7 @@
   "info_collector_area": "Kollektorfläche",
   "info_storage": "Speichervolumen",
   "info_faq_text": "Ihr Gebäude ist nicht dargestellt? Fragen zum Datensatz?",
-  "info_solar_calculator_text": "Simulieren Sie Ihr Solarprojekt mit dem",
+  "info_solar_calculator_text": "Um einen Schritt weiterzugehen, simulieren Sie Ihr Solarprojekt mit dem",
   "info_solar_calculator_link": "Solarrechner EnergieSchweiz",
   "info_solar_calculator_url": "https://www.energieschweiz.ch/tools/solarrechner/",
   "info_faq_link": "Besuchen Sie unsere FAQ",
@@ -81,6 +81,8 @@
   "faq_a7": "<p>Die angezeigten Adressen stammen aus dem Eidgenössischen Gebäude- und Wohnungsregister (GWR). Dieses Register deckt nicht alle Bauwerke ab: Nebengebäude, landwirtschaftliche Bauten, Garagen oder nicht bewohnte Gebäude sind häufig nicht erfasst. In solchen Fällen wird das Solarpotenzial zwar angezeigt, aber ohne zugehörige Adresse.</p>",
   "faq_q8": "Daten und Quellcode",
   "faq_a8": "<p><strong>Daten:</strong> Die Daten werden als Open Government Data (OGD) publiziert und können frei wiederverwendet werden, auch kommerziell, unter der Bedingung, dass die Quelle des Datensatzes angegeben wird (Autor, Titel und Link zum Datensatz).</p><p>Download: <a href='https://opendata.swiss/de/dataset/eignung-von-hausdachern-fur-die-nutzung-von-sonnenenergie' target='_blank'>opendata.swiss ↗</a> · <a href='https://www.geocat.ch/geonetwork/srv/ger/catalog.search#/metadata/b614de5c-2f12-4355-b2c9-7aef2c363ad6' target='_blank'>geocat.ch ↗</a></p><p><strong>Visualisierung:</strong> Die Daten können auch auf <a href='https://map.geo.admin.ch/?layers=ch.bfe.solarenergie-eignung-daecher' target='_blank'>map.geo.admin.ch ↗</a> eingesehen werden, wo jede einzelne Dach- und Fassadenfläche individuell dargestellt wird.</p><p><strong>Quellcode:</strong> Der Code dieser Anwendung steht unter der MIT-Lizenz und kann frei wiederverwendet werden. Das Repository ist auf <a href='https://github.com/SFOE/solar-roof-application' target='_blank'>GitHub ↗</a> zugänglich.</p>",
+  "faq_q11": "Wie wird der Wärmebedarf geschätzt?",
+  "faq_a11": "<p>Der WÃ¤rmebedarf wird nicht gemessen, sondern anhand der Daten des EidgenÃ¶ssischen GebÃ¤ude- und Wohnungsregisters (GWR) geschÃ¤tzt, nÃ¤mlich Alter und Nutzung des GebÃ¤udes sowie WohnungsflÃ¤che. Diese Angaben werden mit typischen Werten aus dem SIA-Merkblatt 2024 verknÃ¼pft und dem lokalen Klima angepasst.</p><p>Es handelt sich um einen Durchschnittswert fÃ¼r vergleichbare GebÃ¤ude: Der tatsÃ¤chliche Bedarf Ihres GebÃ¤udes kann davon abweichen, insbesondere nach einer Sanierung. Ohne Zuordnung im GWR wird das Solarthermie-Potenzial nicht berechnet. Weitere Informationen finden Sie in der <a href='https://www.bfe.admin.ch/de/sonnendach' target='_blank'>technischen Dokumentation â†—</a>.</p>",
   "faq_q9": "Die Gebäudegeometrie scheint nicht korrekt zu sein – warum?",
   "faq_a9": "<p>Die Schätzungen basieren auf einem grossflächigen 3D-Modell (swissBUILDINGS3D), das die gesamte Schweiz abdeckt. Bei komplexen Dachgeometrien (Mehrfach-Dachflächen, Gauben, unregelmässige Formen) sind Abweichungen zwischen Modell und Realität möglich. Diese Ungenauigkeiten können die Schätzungen der Solarproduktion beeinflussen.</p><p>Falls die Geometrie Ihres Gebäudes nicht korrekt erscheint, empfehlen wir den <a href='https://www.energieschweiz.ch/tools/solarrechner/' target='_blank'>Solarrechner von EnergieSchweiz ↗</a> für eine manuelle Schätzung, die Ihrer Situation besser entspricht.</p>",
   "faq_q10": "Wie benutze ich die Anwendung?",

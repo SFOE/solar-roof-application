@@ -35,6 +35,8 @@ watch(
 
 async function onAddressSelect(coords: { east: number; north: number; label: string }) {
   const target: [number, number] = [coords.east, coords.north]
+  // A new search starts from scratch: the previous result disappears at once
+  mapRef.value?.startNewSearch()
   store.selectedAddress = coords.label
   mapRef.value?.zoomTo(target, 0.1)
   setTimeout(() => {

@@ -52,7 +52,7 @@ import WMTSTileGrid from 'ol/tilegrid/WMTS'
 import type Feature from 'ol/Feature'
 import { Stroke, Style } from 'ol/style'
 import { getCenter } from 'ol/extent'
-import { ScaleLine } from 'ol/control'
+import { defaults as defaultControls } from 'ol/control'
 import type { MapBrowserEvent } from 'ol'
 
 const mapContainer = ref<HTMLDivElement>()
@@ -180,6 +180,19 @@ async function runGwrLookup(egid: number | undefined, buildingId: number | null,
 }
 
 /**
+ * Removes the previous result (selection, outlines, commune, postal code) while keeping the
+ * coordinates of the current request. Used when a new question gets no answer.
+ */
+function clearPreviousResult() {
+  const coords = store.clickCoords
+  outlineSource.clear()
+  store.clearSelection()
+  store.clickCoords = coords
+  store.communeId = null
+  store.postalCode = null
+}
+
+/**
  * Main entry point for a selection action at given coordinates.
  * Always selects an individual roof surface (cumulative multi-select).
  * `preferBestRoof` is used for address search to show the building's best pan.
@@ -204,6 +217,10 @@ async function identifyAt(coords: [number, number], preferBestRoof = false) {
       }
     }
     if (!picked) {
+      // Nothing at this place. An address search or a click in single mode is a new question:
+      // drop the previous result so the "no data" message is shown instead of an outdated one.
+      // In multi mode a click in the void keeps the selection being built.
+      if (preferBestRoof || store.selectionMode === 'single') clearPreviousResult()
       if (store.selectedSurfaces.length === 0) store.noData = true
       return
     }
@@ -255,6 +272,18 @@ function identifyFromSearch(coords: [number, number]) {
   return identifyAt(coords, true)
 }
 
+/**
+ * Called as soon as an address is picked in the search bar, before the map moves: a new search
+ * starts from scratch (also in multi mode), so the previous result never stays visible next to
+ * the new address while the map zooms and the building is identified.
+ */
+function startNewSearch() {
+  outlineSource.clear()
+  store.clearSelection()
+  store.communeId = null
+  store.postalCode = null
+}
+
 // Changing the solar layer (roofs ↔ facades) clears the selection (featureIds differ)
 watch(
   () => store.solarMode,
@@ -266,7 +295,7 @@ watch(
   },
 )
 
-defineExpose({ zoomTo, identifyAt: identifyFromSearch })
+defineExpose({ zoomTo, identifyAt: identifyFromSearch, startNewSearch })
 
 onMounted(() => {
   if (!mapContainer.value) return
@@ -282,6 +311,9 @@ onMounted(() => {
 
   const map = new Map({
     target: mapContainer.value,
+    // Only the zoom buttons (+ / −): no rotate arrow, and no OpenLayers attribution button
+    // (the application shows its own attribution line, see .map-attribution)
+    controls: defaultControls({ rotate: false, attribution: false }),
     layers: [basemapLayer, solarLayer, outlineLayer],
     view: new View({
       projection,
@@ -297,8 +329,6 @@ onMounted(() => {
   map.on('pointermove', (evt) => {
     map.getTargetElement().style.cursor = evt.dragging ? 'grabbing' : 'pointer'
   })
-
-  map.addControl(new ScaleLine({ units: 'metric' }))
 
   mapInstance.value = map
 })
@@ -316,6 +346,38 @@ onMounted(() => {
   border-radius: 4px;
   overflow: hidden;
   margin: 0.5rem 0;
+}
+
+/* Zoom buttons: only + / −, stacked, in the style of the other map buttons */
+.map-container :deep(.ol-zoom) {
+  top: 8px;
+  left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: none;
+  padding: 0;
+}
+
+.map-container :deep(.ol-zoom button) {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  font-size: 1.1rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.map-container :deep(.ol-zoom button:hover),
+.map-container :deep(.ol-zoom button:focus-visible) {
+  background: #fff;
+  color: #d32f2f;
+  border-color: #d32f2f;
 }
 
 .map-attribution {

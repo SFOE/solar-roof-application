@@ -6,6 +6,7 @@
  * - Suggestion list display (Req 2.2)
  * - Address selection triggering map centering + identify (Req 2.3)
  * - InfoPanel display with solar data after selection (Req 2.4)
+ * - A new search without result replaces the previous result with the "no data" message
  * - API error handling (Req 2.5)
  */
 
@@ -80,6 +81,27 @@ describe('Address Search', () => {
 
     // Verify suitability badge is shown (class 5 from first result in fixture)
     cy.get('.info-panel .badge-5').should('exist')
+  })
+
+  it('a second search without result shows "no data" instead of the previous result', () => {
+    // Search 1: a building is found
+    cy.searchAndSelect('Bahnhof')
+    cy.wait('@identifyRequest')
+    cy.get('.info-panel .badge-5').should('exist')
+    cy.get('.summary-banner').should('be.visible')
+
+    // Search 2: nothing at this address
+    cy.intercept('GET', 'https://api3.geo.admin.ch/rest/services/api/MapServer/identify*', {
+      fixture: 'identify-empty.json',
+    }).as('identifyEmpty')
+    cy.searchAndSelect('Bahnhof')
+    cy.wait('@identifyEmpty')
+
+    // The previous result is gone and the "no data" message is shown
+    cy.get('.info-panel.no-data').should('be.visible')
+    cy.get('.info-panel.no-data').should('contain.text', 'Keine Daten verfügbar')
+    cy.get('.info-panel .badge-5').should('not.exist')
+    cy.get('.summary-banner').should('not.exist')
   })
 
   it('API error (500) results in no crash and empty suggestion list', () => {

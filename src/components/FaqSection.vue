@@ -40,6 +40,7 @@ const faqItems = computed(() => [
   { question: t('faq_q9'), answer: t('faq_a9') },
   { question: t('faq_q2'), answer: t('faq_a2') },
   { question: t('faq_q3'), answer: t('faq_a3') },
+  { question: t('faq_q11'), answer: t('faq_a11') },
   { question: t('faq_q4'), answer: t('faq_a4') },
   { question: t('faq_q5'), answer: t('faq_a5') },
   { question: t('faq_q7'), answer: t('faq_a7') },
