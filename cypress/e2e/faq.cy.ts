@@ -15,8 +15,8 @@ describe('FAQ Accordion', () => {
   })
 
   it('all FAQ questions are visible on load and all answers are hidden', () => {
-    // There are 9 FAQ questions
-    cy.get('.faq-question').should('have.length', 9)
+    // There are 10 FAQ questions
+    cy.get('.faq-question').should('have.length', 10)
 
     // All questions should be visible
     cy.get('.faq-question').each(($btn) => {
@@ -85,6 +85,7 @@ describe('FAQ Accordion', () => {
     cy.get('.faq-question').eq(6).should('have.attr', 'aria-expanded', 'false')
     cy.get('.faq-question').eq(7).should('have.attr', 'aria-expanded', 'false')
     cy.get('.faq-question').eq(8).should('have.attr', 'aria-expanded', 'false')
+    cy.get('.faq-question').eq(9).should('have.attr', 'aria-expanded', 'false')
 
     // Click the same question again to collapse
     cy.get('@thirdQuestion').click()
