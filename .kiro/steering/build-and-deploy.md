@@ -62,8 +62,8 @@ regardless of which `.env*` file it came from.
   Tags must be explicit (no `latest`, no unusual characters) and are not
   checked for reuse — pick a tag that hasn't been used.
 - **Dependabot** (`dependabot.yml` + `dependabot-automerge.yml`) — monthly,
-  one grouped PR for npm deps and one for GitHub Actions, with a 3-day
-  `cooldown` (only versions released ≥ 3 days ago; security updates are not
+  one grouped PR for npm deps and one for GitHub Actions, with a 7-day
+  `cooldown` (only versions released ≥ 7 days ago; security updates are not
   delayed). PRs are **not** merged as they arrive: the "Dependabot batch
   merge" workflow runs every 3 days (cron `0 6 */3 * *`, or manually), merges
   every open Dependabot PR whose checks are green (`gh pr checks`), majors
