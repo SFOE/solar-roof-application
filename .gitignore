@@ -41,8 +41,5 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 
-# Kiro
-.kiro/
-
 #documentation
 doc/

@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Remind about spec-driven workflow",
+      "trigger": "UserPromptSubmit",
+      "description": "When the user submits a prompt in chat (Vibe) mode, checks if .kiro/specs/ contains active specs and reminds the agent to keep them in sync or suggest switching to spec mode for structured changes.",
+      "action": {
+        "type": "command",
+        "command": "powershell -NoProfile -Command \"if (Test-Path '.kiro/specs') { $specs = Get-ChildItem -Path '.kiro/specs' -Filter '*.md' -Recurse -ErrorAction SilentlyContinue; if ($specs.Count -gt 0) { $names = ($specs | ForEach-Object { $_.Name }) -join ', '; Write-Output \\\"[Spec awareness] This repo has $($specs.Count) spec file(s) in .kiro/specs/: $names. If the user's request involves feature work covered by an existing spec, remind them that updating through the spec workflow (Spec mode) keeps requirements, design, and tasks in sync. If they prefer to stay in chat mode, ensure any code changes are reflected back into the relevant spec files so they do not drift. Do NOT block the user — this is a soft reminder, not a gate.\\\"; exit 0 } else { exit 0 } } else { exit 0 }\""
+      }
+    }
+  ]
+}

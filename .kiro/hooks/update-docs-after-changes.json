@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Check documentation freshness",
+      "trigger": "Stop",
+      "description": "After an agent execution completes, reminds the agent to verify that documentation (README.md, steering files) still reflects the current state of the codebase.",
+      "action": {
+        "type": "agent",
+        "prompt": "Before finishing, check whether this session's changes require documentation updates. Scan for staleness in these surfaces:\n\n1. **README.md** — Do the feature list, folder structure, tech stack, installation/usage commands, CI/CD description, or GitHub secrets table still match the code? Does the dependency list match `package.json`?\n\n2. **Steering files** (`.kiro/steering/*.md`) — If a component, composable, or store was added/removed/renamed, or the selection/aggregation model changed, or a build/CI step changed, do the relevant steering files still reflect that? Key files:\n   - `project-overview.md` — repo structure, tech stack, data sources\n   - `coding-standards.md` — lint/format tooling, testing setup, secrets handling\n   - `component-development.md` — component conventions, state-access pattern\n   - `data-and-state-flow.md` — selection model, swisstopo API usage, VESE proxy flow\n   - `build-and-deploy.md` — build pipeline, env files, CI/CD workflows\n\n3. **i18n files** (`src/locales/*.json`) — If a new user-facing string was added, does it exist in **all four** locale files (de, fr, it, en), not just one?\n\n4. **Env/secrets docs** — If a new environment variable was introduced, is it documented in the README's \"Environment variables\" section and correctly classified as public (`.env.production`/`.env.prod`) vs. secret (`.env.local`, never read from `src/`)?\n\nIf nothing changed that affects docs, say so briefly and move on. If something is stale, fix it or flag it to the user."
+      }
+    }
+  ]
+}
