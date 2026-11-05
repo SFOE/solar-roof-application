@@ -8,9 +8,10 @@ name: Dependabot batch merge
 # automatically (manual run of package-and-deploy-frontend.yml). Before relying on this for prod,
 # restrict it again to patch and minor updates.
 #
-# The checks are verified here (`gh pr checks`), because branch protection is not enforced on
-# this private repository (GitHub Free plan). A pull request with a failing or still running
-# check is skipped and stays open: a failing one must be handled by hand.
+# The checks are verified here too (`gh pr checks`), on top of the branch protection of main
+# (required checks). A pull request with a failing or still running check is skipped and stays
+# open: a failing one must be handled by hand. One that is behind main cannot be merged
+# (branches must be up to date): Dependabot rebases it and it is merged at the next batch.
 #
 # A merge done with GITHUB_TOKEN does not start the push workflows (GitHub rule), so the dev
 # deployment is started explicitly, once per batch (workflow_dispatch is allowed with the token).

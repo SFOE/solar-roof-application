@@ -71,10 +71,12 @@ regardless of which `.env*` file it came from.
   (a merge made with `GITHUB_TOKEN` does not trigger the push workflow).
   PRs with a failing or running check are skipped. Before relying on this
   for prod, tighten it back to patch/minor.
-  **Caveat:** the repository is private on the GitHub Free organisation plan,
-  where branch protection rules and rulesets are **not enforced**, which is
-  why the workflow checks the results itself. Don't describe `main` as
-  protected until the repository is public or the plan is upgraded.
+  **Branch protection:** the repository is **public** (so the rule is
+  enforced on the GitHub Free plan). `main` requires a pull request (0
+  approvals), the two checks `Lint, Test & Build` and `Check backend`, and
+  up-to-date branches. The batch workflow still checks the results itself.
+  If the repository ever goes private again, the rule stops being enforced
+  on the Free plan.
 
 ## Deploying to prod (manual, two repos)
 
