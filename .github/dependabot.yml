@@ -4,6 +4,10 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    # Only propose versions released at least 7 days ago (time for a broken or malicious release
+    # to be pulled). Does not apply to security updates, which are opened at once.
+    cooldown:
+      default-days: 7
     groups:
       all-dependencies:
         patterns:
@@ -24,6 +28,13 @@ updates:
     directory: "/"
     schedule:
       interval: "monthly"
+    cooldown:
+      default-days: 7
+    # One pull request for all actions (instead of one per action)
+    groups:
+      all-actions:
+        patterns:
+          - "*"
     labels:
       - "dependencies"
     commit-message:
