@@ -1,6 +1,6 @@
 name: Dependabot batch merge
 
-# Every 3 days (and on demand), merges ALL open Dependabot pull requests whose checks are green,
+# Once a week, Monday 06:00 UTC (and on demand), merges ALL open Dependabot pull requests whose checks are green,
 # then deploys dev once. Pull requests are not merged one by one as they arrive: their checks
 # still run on their own (Lint, Test & Build, Check backend), the merge waits for the next batch.
 #
@@ -16,13 +16,11 @@ name: Dependabot batch merge
 # deployment is started explicitly, once per batch (workflow_dispatch is allowed with the token).
 #
 # Security updates are opened by Dependabot at once (the cooldown does not apply to them) and are
-# merged at the next batch, at most 3 days later. Merge one by hand if it cannot wait.
-#
-# Note: "*/3" restarts on the 1st of each month, so the gap is 1 to 3 days at a month change.
+# merged at the next batch, at most 7 days later. Merge one by hand if it cannot wait.
 
 on:
   schedule:
-    - cron: "0 6 */3 * *" # 06:00 UTC
+    - cron: "0 6 * * 1" # Monday 06:00 UTC
   workflow_dispatch:
 
 permissions:

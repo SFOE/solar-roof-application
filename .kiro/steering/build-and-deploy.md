@@ -65,7 +65,7 @@ regardless of which `.env*` file it came from.
   one grouped PR for npm deps and one for GitHub Actions, with a 7-day
   `cooldown` (only versions released ≥ 7 days ago; security updates are not
   delayed). PRs are **not** merged as they arrive: the "Dependabot batch
-  merge" workflow runs every 3 days (cron `0 6 */3 * *`, or manually), merges
+  merge" workflow runs weekly (cron `0 6 * * 1`, Monday 06:00 UTC, or manually), merges
   every open Dependabot PR whose checks are green (`gh pr checks`), majors
   included, then starts **one** dev deployment via `workflow_dispatch`
   (a merge made with `GITHUB_TOKEN` does not trigger the push workflow).
